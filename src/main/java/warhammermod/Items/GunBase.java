@@ -16,6 +16,7 @@ import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
+import warhammermod.Items.melee.ShieldTemplate;
 import warhammermod.utils.reference;
 
 import java.util.Random;
@@ -166,8 +167,7 @@ public class GunBase extends Item implements IReloadItem {
     }
 
     public Boolean hasshield(Player player){
-        return false;
-        //return player.getOffhandItem().getItem() instanceof ShieldTemplate;
+        return player.getOffhandItem().getItem() instanceof ShieldTemplate;
     }
 
     private void setshield(Player player){ hasshield = hasshield(player); }

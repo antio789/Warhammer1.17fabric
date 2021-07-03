@@ -4,6 +4,8 @@ package warhammermod.Items.Render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
@@ -19,7 +21,7 @@ import warhammermod.Items.Render.Model.SlingModel;
 import warhammermod.Items.ranged.SlingTemplate;
 import warhammermod.utils.Clientside;
 import warhammermod.utils.reference;
-
+@Environment(EnvType.CLIENT)
 public class RenderSling implements BuiltinItemRendererRegistry.DynamicItemRenderer, ResourceManagerReloadListener {
 
     private static final ResourceLocation resource_location=new ResourceLocation(reference.modid,"textures/items/sling.png");

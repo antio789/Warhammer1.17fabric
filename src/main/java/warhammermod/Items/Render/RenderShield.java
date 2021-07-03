@@ -3,6 +3,8 @@ package warhammermod.Items.Render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
@@ -18,7 +20,7 @@ import warhammermod.utils.Clientside;
 import warhammermod.utils.reference;
 
 import java.util.ArrayList;
-
+@Environment(EnvType.CLIENT)
 public class RenderShield implements BuiltinItemRendererRegistry.DynamicItemRenderer, ResourceManagerReloadListener {
     private final ResourceLocation HEShieldTexture = new ResourceLocation(reference.modid,"textures/items/shields/high_elf_shield.png");
     private final ResourceLocation DEShieldTexture = new ResourceLocation(reference.modid,"textures/items/shields/dark_elf_shield.png");

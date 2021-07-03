@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
@@ -102,11 +103,11 @@ public class Ghal_Maraz extends HammerTemplate {
 
     public  void handleeffects(Player player,Level world,Boolean succes){
         if(succes) {
-            player.sendMessage(new TextComponent("item.ghal_maraz.succes"), Util.NIL_UUID);
+            player.sendMessage(new TranslatableComponent("item.ghal_maraz.succes"), Util.NIL_UUID);
             world.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, player.getSoundSource(), 0.5F, 1.6F);
         }
         else {
-            player.sendMessage(new TextComponent("item.ghal_maraz.fail"),  Util.NIL_UUID);
+            player.sendMessage(new TranslatableComponent("item.ghal_maraz.fail"),  Util.NIL_UUID);
             world.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.UI_TOAST_OUT, player.getSoundSource(), 0.5F, 1.5F);
         }
     }

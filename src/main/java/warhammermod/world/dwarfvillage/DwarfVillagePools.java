@@ -36,18 +36,20 @@ public class DwarfVillagePools {
                  Pair.of(StructurePoolElement.legacy(location("houses/dwarf_builder_house_1").toString(), ProcessorLists.EMPTY), 2),
                  Pair.of(StructurePoolElement.legacy(location("houses/dwarf_engineer_house_1").toString(), ProcessorLists.EMPTY), 1),
                  Pair.of(StructurePoolElement.legacy(location("houses/dwarf_farmer_house_1").toString(), ProcessorLists.EMPTY), 2),
-                 Pair.of(StructurePoolElement.legacy(location("houses/dwarf_miner_house").toString(), ProcessorLists.EMPTY), 3),
+                 Pair.of(StructurePoolElement.legacy(location("houses/dwarf_miner_house_1").toString(), ProcessorLists.EMPTY), 3),
                  Pair.of(StructurePoolElement.legacy(location("houses/dwarf_slayer_house_1").toString(), ProcessorLists.EMPTY), 1),
                  Pair.of(StructurePoolElement.empty(), 4)), StructureTemplatePool.Projection.RIGID));
 
-         Pools.register(new StructureTemplatePool(new ResourceLocation("warhammermod:dwarf_village/terminators"), new ResourceLocation("empty"), ImmutableList.of(
+        Pools.register(new StructureTemplatePool(new ResourceLocation("warhammermod:dwarf_village/dwarf"), new ResourceLocation("empty"), ImmutableList.of(Pair.of(StructurePoolElement.legacy("warhammermod:dwarf_village/dwarf/dwarf_villager"), 1)), StructureTemplatePool.Projection.RIGID));
+
+
+        Pools.register(new StructureTemplatePool(new ResourceLocation("warhammermod:dwarf_village/terminators"), new ResourceLocation("empty"), ImmutableList.of(
                  Pair.of(StructurePoolElement.legacy("warhammermod:dwarf_village/terminators/terminator_01", ProcessorLists.EMPTY), 1),
                  Pair.of(StructurePoolElement.legacy("warhammermod:dwarf_village/terminators/terminator_02", ProcessorLists.EMPTY), 1),
                  Pair.of(StructurePoolElement.legacy("warhammermod:dwarf_village/terminators/terminator_03", ProcessorLists.EMPTY), 1),
                  Pair.of(StructurePoolElement.legacy("warhammermod:dwarf_village/terminators/terminator_04", ProcessorLists.EMPTY), 1)), StructureTemplatePool.Projection.TERRAIN_MATCHING));
 
-         Pools.register(new StructureTemplatePool(new ResourceLocation("warhammermod:dwarf_village/dwarf"), new ResourceLocation("empty"), ImmutableList.of(Pair.of(StructurePoolElement.legacy(location("dwarf/dwarf").toString()), 1)), StructureTemplatePool.Projection.RIGID));
-    }
+         }
 
 
     public static ResourceLocation location(String name)

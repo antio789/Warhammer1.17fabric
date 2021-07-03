@@ -3,6 +3,8 @@ package warhammermod.Entities.Living.Renders.Models;
 
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HorseModel;
 import net.minecraft.client.model.HumanoidModel;
@@ -20,6 +22,7 @@ import net.minecraft.world.entity.monster.RangedAttackMob;
  * ModelZombie - Either Mojang or a mod author
  * Created using Tabula 7.0.1
  */
+@Environment(EnvType.CLIENT)
 public class SkavenModel<T extends Mob & RangedAttackMob> extends HumanoidModel<T> {
     public ModelPart bipedLeftArm;
     public ModelPart bipedRightLeg;

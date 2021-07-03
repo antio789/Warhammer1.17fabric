@@ -2,6 +2,8 @@ package warhammermod.Entities.Living.Renders;
 
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
@@ -16,7 +18,7 @@ import warhammermod.Entities.Living.Renders.Models.DwarfModel;
 import warhammermod.utils.Clientside;
 import warhammermod.utils.reference;
 
-
+@Environment(EnvType.CLIENT)
 public class DwarfRenderer extends MobRenderer<DwarfEntity, DwarfModel<DwarfEntity>> {
     private static final ResourceLocation warrior = new ResourceLocation(reference.modid,"textures/entity/dwarf/warrior.png");
     private static final ResourceLocation miner = new ResourceLocation(reference.modid,"textures/entity/dwarf/miner.png");

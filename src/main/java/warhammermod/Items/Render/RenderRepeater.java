@@ -3,6 +3,8 @@ package warhammermod.Items.Render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
@@ -16,7 +18,7 @@ import net.minecraft.world.item.ItemStack;
 import warhammermod.Items.Render.Model.RepeaterModel;
 import warhammermod.utils.Clientside;
 
-
+@Environment(EnvType.CLIENT)
 public class RenderRepeater implements BuiltinItemRendererRegistry.DynamicItemRenderer, ResourceManagerReloadListener{
     private static final String resource_location="warhammermod:textures/items/repeater.png";
     static final ResourceLocation TEXTURE = new ResourceLocation(resource_location);

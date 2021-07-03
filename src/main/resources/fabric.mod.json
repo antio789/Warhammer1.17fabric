@@ -14,7 +14,7 @@
   },
 
   "license": "CC0-1.0",
-  "icon": "assets/modid/icon.png",
+  "icon": "assets/warhammermod/textures/items/ghal_maraz.png",
 
   "environment": "*",
   "entrypoints": {

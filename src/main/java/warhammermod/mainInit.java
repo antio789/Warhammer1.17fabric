@@ -6,6 +6,7 @@ import net.minecraft.sounds.SoundEvent;
 import warhammermod.Items.ItemsInit;
 import warhammermod.utils.Registry.Entityinit;
 import warhammermod.utils.Registry.WHRegistry;
+import warhammermod.world.Spawn;
 
 
 public class mainInit implements ModInitializer {
@@ -22,6 +23,7 @@ public class mainInit implements ModInitializer {
         WHRegistry.registerprofessions();
         WHRegistry.registerProcessors();
         WHRegistry.registerStructures();
+        Spawn.addEntitySpawn();
     }
 
 }

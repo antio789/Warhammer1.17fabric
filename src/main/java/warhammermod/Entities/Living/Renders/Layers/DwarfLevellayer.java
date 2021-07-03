@@ -4,6 +4,8 @@ package warhammermod.Entities.Living.Renders.Layers;
 import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.Util;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.VillagerHeadModel;
@@ -20,7 +22,7 @@ import warhammermod.Entities.Living.DwarfEntity;
 import warhammermod.utils.reference;
 
 import java.util.function.Predicate;
-
+@Environment(EnvType.CLIENT)
 public class DwarfLevellayer<T extends DwarfEntity, M extends EntityModel<T>> extends RenderLayer<T, M> {
     private static final Int2ObjectMap<ResourceLocation> LEVEL_LOCATIONS = Util.make(new Int2ObjectOpenHashMap<>(), (p_215348_0_) -> {
         p_215348_0_.put(1, location("stone"));
