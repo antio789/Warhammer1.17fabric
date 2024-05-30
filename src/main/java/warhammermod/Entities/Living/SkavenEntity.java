@@ -1,50 +1,39 @@
 package warhammermod.Entities.Living;
 
 
-
-import com.mojang.math.Vector3d;
-import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.Mth;
-import net.minecraft.world.Difficulty;
-import net.minecraft.world.DifficultyInstance;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.*;
-import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.behavior.Swim;
-import net.minecraft.world.entity.ai.goal.*;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
-import net.minecraft.world.entity.animal.Cat;
-import net.minecraft.world.entity.animal.IronGolem;
-import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.monster.RangedAttackMob;
-import net.minecraft.world.entity.npc.AbstractVillager;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.ThrownPotion;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.ShieldItem;
-import net.minecraft.world.item.alchemy.Potion;
-import net.minecraft.world.item.alchemy.PotionUtils;
-import net.minecraft.world.item.alchemy.Potions;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.item.enchantment.Enchantments;
-import net.minecraft.world.level.GameRules;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.NaturalSpawner;
-import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraft.world.level.biome.Biomes;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.block.BlockState;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.enchantment.Enchantments;
+import net.minecraft.entity.*;
+import net.minecraft.entity.ai.RangedAttackMob;
+import net.minecraft.entity.ai.goal.*;
+import net.minecraft.entity.attribute.DefaultAttributeContainer;
+import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.data.DataTracker;
+import net.minecraft.entity.data.TrackedData;
+import net.minecraft.entity.data.TrackedDataHandlerRegistry;
+import net.minecraft.entity.mob.HostileEntity;
+import net.minecraft.entity.passive.CatEntity;
+import net.minecraft.entity.passive.IronGolemEntity;
+import net.minecraft.entity.passive.MerchantEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.projectile.thrown.PotionEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.item.ShieldItem;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.potion.Potion;
+import net.minecraft.potion.Potions;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundEvent;
+import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.*;
+import net.minecraft.world.biome.BiomeKeys;
 import org.jetbrains.annotations.Nullable;
 import warhammermod.Entities.Living.AImanager.RangedSkavenAttackGoal;
 import warhammermod.Entities.Projectile.StoneEntity;
@@ -58,13 +47,12 @@ import warhammermod.utils.Registry.Entityinit;
 import warhammermod.utils.Registry.WHRegistry;
 import warhammermod.utils.functions;
 
+import java.util.*;
+
 import static warhammermod.utils.reference.*;
 
 
-import java.util.*;
-
-
-public class SkavenEntity extends Monster implements RangedAttackMob {
+public class SkavenEntity extends HostileEntity implements RangedAttackMob {
 
     //useless but to remove annoying error message
 
@@ -72,62 +60,62 @@ public class SkavenEntity extends Monster implements RangedAttackMob {
      * Goals
      */
     private final RangedSkavenAttackGoal<SkavenEntity> bowGoal = new RangedSkavenAttackGoal<>(this, 1.0D, 20, 15.0F);
-    private final RangedAttackGoal aiRangedPotion = new RangedAttackGoal(this,1,55,10F);
+    private final ProjectileAttackGoal aiRangedPotion = new ProjectileAttackGoal(this,1,55,10F);
     private final MeleeAttackGoal meleeGoal = new MeleeAttackGoal(this, 1.2D, false) {
         public void stop() {
             super.stop();
-            setAggressive(false);
+            setAttacking(false);
         }
 
         public void start() {
             super.start();
-            setAggressive(true);
+            setAttacking(true);
         }
     };
 
     public void reassessWeaponGoal() {
-        if (this.level != null && !this.level.isClientSide) {
-            this.goalSelector.removeGoal(this.meleeGoal);
-            this.goalSelector.removeGoal(this.bowGoal);
-            this.goalSelector.removeGoal(this.aiRangedPotion);
-            ItemStack item = this.getMainHandItem();
+        if (this.world != null && !this.world.isClient) {
+            this.goalSelector.remove(this.meleeGoal);
+            this.goalSelector.remove(this.bowGoal);
+            this.goalSelector.remove(this.aiRangedPotion);
+            ItemStack item = this.getMainHandStack();
             int i = firerate.get(getSkavenTypePosition());
             if (item.getItem() instanceof WarpgunTemplate || item.getItem() instanceof RatlingGun || item.getItem() instanceof SlingTemplate) {
-                if (this.level.getDifficulty() != Difficulty.HARD) {
+                if (this.world.getDifficulty() != Difficulty.HARD) {
                     i *= 1.5;
                 }
 
                 this.bowGoal.setMinAttackInterval(i);
-                this.goalSelector.addGoal(4, this.bowGoal);
+                this.goalSelector.add(4, this.bowGoal);
             } else if(getSkaventype().equals(globadier)){
-                this.goalSelector.addGoal(4,aiRangedPotion);
+                this.goalSelector.add(4,aiRangedPotion);
             }
 
             else{
-                this.goalSelector.addGoal(4, this.meleeGoal);
+                this.goalSelector.add(4, this.meleeGoal);
             }
 
         }
     }
 
-    protected void registerGoals() {
+    protected void initGoals() {
 
-        this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(3, new AvoidEntityGoal<>(this, Cat.class, 6.0F, 1.0D, 1.2D));
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this, SkavenEntity.class).setAlertOthers());
-        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
-        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, IronGolem.class, true));
-        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, AbstractVillager.class, false));
-        this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
-        this.goalSelector.addGoal(8, new RandomStrollGoal(this, 0.6D));
+        this.goalSelector.add(0, new SwimGoal(this));
+        this.goalSelector.add(3, new FleeEntityGoal<>(this, CatEntity.class, 6.0F, 1.0D, 1.2D));
+        this.targetSelector.add(1, new RevengeGoal(this, SkavenEntity.class).setGroupRevenge());
+        this.targetSelector.add(2, new ActiveTargetGoal<>(this, PlayerEntity.class, true));
+        this.targetSelector.add(3, new ActiveTargetGoal<>(this, IronGolemEntity.class, true));
+        this.targetSelector.add(3, new ActiveTargetGoal<>(this, MerchantEntity.class, false));
+        this.goalSelector.add(6, new LookAtEntityGoal(this, PlayerEntity.class, 8.0F));
+        this.goalSelector.add(6, new LookAroundGoal(this));
+        this.goalSelector.add(8, new WanderAroundGoal(this, 0.6D));
 
     }
     /**
      * handle all of skaventypes
      *
      */
-    public static final EntityDataAccessor<String> SkavenType = SynchedEntityData.<String>defineId(SkavenEntity.class, EntityDataSerializers.STRING);
+    public static final TrackedData<String> SkavenType = DataTracker.<String>registerData(SkavenEntity.class, TrackedDataHandlerRegistry.STRING);
     private static ArrayList<String> Types = new ArrayList<String>(Arrays.asList(slave,clanrat,stormvermin,gutter_runner,globadier,ratling_gunner));
     private ArrayList<Float> SkavenSize = new ArrayList<Float>(Arrays.asList(1F,(1.7F/1.6F),(1.8F/1.6F),(1.7F/1.6F),(1.7F/1.6F),(1.7F/1.6F)));
     private ArrayList<Integer> Spawnchance = new ArrayList<Integer>(Arrays.asList(38,27,15,7,4,4));//3
@@ -152,27 +140,27 @@ public class SkavenEntity extends Monster implements RangedAttackMob {
 
 
     public String getSkaventype(){
-        return entityData.get(SkavenType);
+        return dataTracker.get(SkavenType);
     }
     public int getSkavenTypePosition(){
-        int typepos = Math.max(Types.indexOf(entityData.get(SkavenType)),0);
+        int typepos = Math.max(Types.indexOf(dataTracker.get(SkavenType)),0);
         return typepos;
     }
     public float getSkavenSize(){
         int typepos = Math.max(Types.indexOf(getSkaventype()),0);
         return SkavenSize.get(typepos);
     }
-    public EntityDimensions getDimensions(Pose pose) {
-        return super.getDimensions(pose).scale(getSkavenSize());
+    public EntityDimensions getDimensions(EntityPose pose) {
+        return super.getDimensions(pose).scaled(getSkavenSize());
     }
 
     private void updateSkavenSize(){
-        this.refreshDimensions();
+        this.calculateDimensions();
         handleAttributes();
     }
 
     private void setSkavenType(String type){
-        this.entityData.set(SkavenType,type);
+        this.dataTracker.set(SkavenType,type);
     }
 
     private String getrandomtype(){
@@ -194,48 +182,48 @@ public class SkavenEntity extends Monster implements RangedAttackMob {
     /**
      * initializing
      */
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(SkavenType, Types.get(0));
+    protected void initDataTracker() {
+        super.initDataTracker();
+        this.dataTracker.startTracking(SkavenType, Types.get(0));
     }
 
 
     private boolean fixgame; //skaven task dont work without was for 1.15 to test if still necessary
 
-    public SkavenEntity(EntityType<? extends SkavenEntity> p_i48555_1_, Level p_i48555_2_) {
+    public SkavenEntity(EntityType<? extends SkavenEntity> p_i48555_1_, World p_i48555_2_) {
         super(p_i48555_1_, p_i48555_2_);
         this.reassessWeaponGoal();
         fixgame=true;
     }
     @Nullable
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyIn, MobSpawnType reason, @Nullable SpawnGroupData spawnDataIn, @Nullable CompoundTag dataTag) {
-        spawnDataIn = super.finalizeSpawn(world, difficultyIn, reason, spawnDataIn, dataTag);
+    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficultyIn, SpawnReason reason, @Nullable EntityData spawnDataIn, @Nullable NbtCompound dataTag) {
+        spawnDataIn = super.initialize(world, difficultyIn, reason, spawnDataIn, dataTag);
         setSkavenType(getrandomtype());
-        this.populateDefaultEquipmentSlots(difficultyIn);
-        this.populateDefaultEquipmentEnchantments(difficultyIn);
+        this.initEquipment(difficultyIn);
+        this.updateEnchantments(difficultyIn);
         this.reassessWeaponGoal();
         this.handleAttributes();
         return spawnDataIn;
     }
 
 
-    public void aiStep() {
+    public void tickMovement() {
         if(fixgame){
             reassessWeaponGoal();
             this.handleAttributes();
             fixgame=false;
         }
-        super.aiStep();
+        super.tickMovement();
     }
 
         /**
          * attributes
          */
     public void updateSkavenAttributes(double speed,double health,double armor,double AD){
-        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(health);
-        this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(speed);
-        this.getAttribute(Attributes.ARMOR).setBaseValue(armor);
-        this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(AD);
+        this.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH).setBaseValue(health);
+        this.getAttributeInstance(EntityAttributes.GENERIC_MOVEMENT_SPEED).setBaseValue(speed);
+        this.getAttributeInstance(EntityAttributes.GENERIC_ARMOR).setBaseValue(armor);
+        this.getAttributeInstance(EntityAttributes.GENERIC_ATTACK_DAMAGE).setBaseValue(AD);
     }
     public void handleAttributes(){
         double speed = 0.55;
@@ -264,18 +252,18 @@ public class SkavenEntity extends Monster implements RangedAttackMob {
         updateSkavenAttributes(speed,max_health,armor,AD);
     };
 
-    public static AttributeSupplier.Builder createMonsterAttributes()  {
-        return Monster.createMonsterAttributes();
+    public static DefaultAttributeContainer.Builder createHostileAttributes()  {
+        return HostileEntity.createHostileAttributes();
     }
     /**
      * behaviour
      */
-    public boolean isAffectedByPotions() {
+    public boolean isAffectedBySplashPotions() {
         return !getSkaventype().equals(globadier);
     }
 
-    public void performRangedAttack(LivingEntity target, float p_82196_2_) {
-        Item item = this.getMainHandItem().getItem();
+    public void attack(LivingEntity target, float p_82196_2_) {
+        Item item = this.getMainHandStack().getItem();
         if(item instanceof WarpgunTemplate){
             attackEntitywithrifle(target,7,11);
         }
@@ -292,101 +280,101 @@ public class SkavenEntity extends Monster implements RangedAttackMob {
     private void attackpotions(LivingEntity target){
 
 
-        Vec3 vec3d = target.getDeltaMovement();
+        Vec3d vec3d = target.getVelocity();
         double d0 = target.getX() + vec3d.x - this.getX();
         double d1 = target.getEyeY() - (double)1.1F - this.getY();
         double d2 = target.getZ() + vec3d.z - this.getZ();
         double f = Math.sqrt(d0 * d0 + d2 * d2);
         Potion potion = random.nextBoolean() ? Potions.HARMING : Potions.POISON;
 
-        ThrownPotion potionentity = new ThrownPotion(this.level, this);
-        potionentity.setItem(PotionUtils.setPotion(new ItemStack(Items.LINGERING_POTION), potion));
-        potionentity.setXRot(potionentity.getXRot() - -20.0F);
-        potionentity.shoot(d0, d1 + (double)(f * 0.2F), d2, 0.75F, 8.0F);
-        this.level.playSound((Player) null, this.getX(), this.getY(), this.getZ(), SoundEvents.WITCH_THROW, this.getSoundSource(), 1.0F, 0.8F + this.random.nextFloat() * 0.4F);
-        this.level.addFreshEntity(potionentity);
+        PotionEntity potionentity = new PotionEntity(this.world, this);
+        potionentity.setItem(PotionUtil.setPotion(new ItemStack(Items.LINGERING_POTION), potion));
+        potionentity.setPitch(potionentity.getPitch() - -20.0F);
+        potionentity.setVelocity(d0, d1 + (double)(f * 0.2F), d2, 0.75F, 8.0F);
+        this.world.playSound((PlayerEntity) null, this.getX(), this.getY(), this.getZ(), SoundEvents.ENTITY_WITCH_THROW, this.getSoundCategory(), 1.0F, 0.8F + this.random.nextFloat() * 0.4F);
+        this.world.spawnEntity(potionentity);
 
     }
     private void attackEntitywithrifle(LivingEntity target, int damage, float inaccuracy){
-        WarpBulletEntity bullet = new WarpBulletEntity(this,level, damage);
-        int j = EnchantmentHelper.getEnchantmentLevel(Enchantments.POWER_ARROWS,this);
+        WarpBulletEntity bullet = new WarpBulletEntity(this,world, damage);
+        int j = EnchantmentHelper.getEquipmentLevel(Enchantments.POWER,this);
         if (j > 0) {
             bullet.setpowerDamage(j);
         }
-        int k = EnchantmentHelper.getEnchantmentLevel(Enchantments.PUNCH_ARROWS, this) + 1;
+        int k = EnchantmentHelper.getEquipmentLevel(Enchantments.PUNCH, this) + 1;
         if (k > 0) {
             bullet.setknockbacklevel(k);
         }
         double d0 = target.getX()  - this.getX();
-        double d1 = target.getY(0.3333333333333333D) - bullet.getY();
+        double d1 = target.getBodyY(0.3333333333333333D) - bullet.getY();
         double d2 = target.getZ() - this.getZ();
         double d3 = (double) Math.sqrt(d0 * d0 + d2 * d2);
-        bullet.shoot(d0,d1+d3*0.06,d2,3,(float)(inaccuracy - this.level.getDifficulty().getId() * 4));//inac14
-        this.playSound( SoundEvents.GENERIC_EXPLODE, 1.0F, 2F / (random.nextFloat() * 0.4F + 1.2F) + 0.5F);
-        this.level.addFreshEntity(bullet);
+        bullet.setVelocity(d0,d1+d3*0.06,d2,3,(float)(inaccuracy - this.world.getDifficulty().getId() * 4));//inac14
+        this.playSound( SoundEvents.ENTITY_GENERIC_EXPLODE, 1.0F, 2F / (random.nextFloat() * 0.4F + 1.2F) + 0.5F);
+        this.world.spawnEntity(bullet);
 
     }
     private void attackEntitywithstone(LivingEntity target, float inaccuracy){
-        StoneEntity stone = new StoneEntity(this,level,3);
+        StoneEntity stone = new StoneEntity(this,world,3);
 
-        int j = EnchantmentHelper.getEnchantmentLevel(Enchantments.POWER_ARROWS, this);
+        int j = EnchantmentHelper.getEquipmentLevel(Enchantments.POWER, this);
         if (j > 0) {
             stone.setTotaldamage(stone.projectiledamage + (float)j * 0.5F + 0.5F);
         }
-        int k = EnchantmentHelper.getEnchantmentLevel(Enchantments.PUNCH_ARROWS, this) + 1;
+        int k = EnchantmentHelper.getEquipmentLevel(Enchantments.PUNCH, this) + 1;
         if (k > 0) {
             stone.setknockbacklevel(k);
         }
 
 
-        if (EnchantmentHelper.getEnchantmentLevel(Enchantments.FLAMING_ARROWS, this) > 0) {
-            stone.setSecondsOnFire(100);
+        if (EnchantmentHelper.getEquipmentLevel(Enchantments.FLAME, this) > 0) {
+            stone.setOnFireFor(100);
         }
         double d0 = target.getX()  - this.getX();
-        double d1 = target.getY(0.3333333333333333D) - stone.getY();
+        double d1 = target.getBodyY(0.3333333333333333D) - stone.getY();
         double d2 = target.getZ() - this.getZ();
         double d3 = (double) Math.sqrt(d0 * d0 + d2 * d2);
-        stone.shoot(d0,d1+d3*0.2,d2,1.3F,(float)(inaccuracy - this.level.getDifficulty().getId() * 4));
-        this.playSound( SoundEvents.ARROW_SHOOT, 1.0F, 1.0F / (random.nextFloat() * 0.4F + 1.2F));
-        this.level.addFreshEntity(stone);
+        stone.setVelocity(d0,d1+d3*0.2,d2,1.3F,(float)(inaccuracy - this.world.getDifficulty().getId() * 4));
+        this.playSound( SoundEvents.ENTITY_ARROW_SHOOT, 1.0F, 1.0F / (random.nextFloat() * 0.4F + 1.2F));
+        this.world.spawnEntity(stone);
 
     }
 
-    public boolean hurt(DamageSource source, float amount){
-        if (!super.hurt(source, amount)) {
+    public boolean damage(DamageSource source, float amount){
+        if (!super.damage(source, amount)) {
             return false;
-        } else if (!(this.level instanceof ServerLevel)) {
+        } else if (!(this.world instanceof ServerWorld)) {
             return false;
         } else {
-            ServerLevel serverworld = (ServerLevel)this.level;
+            ServerWorld serverworld = (ServerWorld)this.world;
             LivingEntity livingentity = this.getTarget();
-            if (livingentity == null && source.getEntity() instanceof LivingEntity) {
-                livingentity = (LivingEntity)source.getEntity();
+            if (livingentity == null && source.getAttacker() instanceof LivingEntity) {
+                livingentity = (LivingEntity)source.getAttacker();
             }
 
 
 
 
-            if (livingentity != null && this.level.getDifficulty() == Difficulty.HARD && (double)this.random.nextFloat() < reinforcementchance.get(getSkavenTypePosition())/2 && this.level.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)) {
-                SkavenEntity skavenEntity = Entityinit.SKAVEN.create(this.level);
-                int i = Mth.floor(this.getX());
-                int j = Mth.floor(this.getY());
-                int k = Mth.floor(this.getZ());
+            if (livingentity != null && this.world.getDifficulty() == Difficulty.HARD && (double)this.random.nextFloat() < reinforcementchance.get(getSkavenTypePosition())/2 && this.world.getGameRules().getBoolean(GameRules.DO_MOB_SPAWNING)) {
+                SkavenEntity skavenEntity = Entityinit.SKAVEN.create(this.world);
+                int i = MathHelper.floor(this.getX());
+                int j = MathHelper.floor(this.getY());
+                int k = MathHelper.floor(this.getZ());
 
                 for(int l = 0; l < 50; ++l) {
-                    int i1 = i + Mth.nextInt(this.random, 7, 40) * Mth.nextInt(this.random, -1, 1);
-                    int j1 = j + Mth.nextInt(this.random, 7, 40) * Mth.nextInt(this.random, -1, 1);
-                    int k1 = k + Mth.nextInt(this.random, 7, 40) * Mth.nextInt(this.random, -1, 1);
+                    int i1 = i + MathHelper.nextInt(this.random, 7, 40) * MathHelper.nextInt(this.random, -1, 1);
+                    int j1 = j + MathHelper.nextInt(this.random, 7, 40) * MathHelper.nextInt(this.random, -1, 1);
+                    int k1 = k + MathHelper.nextInt(this.random, 7, 40) * MathHelper.nextInt(this.random, -1, 1);
                     BlockPos blockpos = new BlockPos(i1, j1, k1);
                     EntityType<?> entitytype = skavenEntity.getType();
-                    SpawnPlacements.Type placementType = SpawnPlacements.getPlacementType(entitytype);
-                    if (NaturalSpawner.isSpawnPositionOk(placementType, this.level, blockpos, entitytype) && SpawnPlacements.checkSpawnRules(entitytype, serverworld, MobSpawnType.REINFORCEMENT, blockpos, this.level.random)) {
-                        skavenEntity.setPos((double)i1, (double)j1, (double)k1);
-                        if (!this.level.hasNearbyAlivePlayer((double)i1, (double)j1, (double)k1, 7.0D) && this.level.isUnobstructed(skavenEntity) && this.level.noCollision(skavenEntity) && !this.level.containsAnyLiquid(skavenEntity.getBoundingBox())) {
+                    SpawnRestriction.Location placementType = SpawnRestriction.getLocation(entitytype);
+                    if (SpawnHelper.canSpawn(placementType, this.world, blockpos, entitytype) && SpawnRestriction.canSpawn(entitytype, serverworld, SpawnReason.REINFORCEMENT, blockpos, this.world.random)) {
+                        skavenEntity.setPosition((double)i1, (double)j1, (double)k1);
+                        if (!this.world.isPlayerInRange((double)i1, (double)j1, (double)k1, 7.0D) && this.world.doesNotIntersectEntities(skavenEntity) && this.world.isSpaceEmpty(skavenEntity) && !this.world.containsFluid(skavenEntity.getBoundingBox())) {
 
                             skavenEntity.setTarget(livingentity);
-                            skavenEntity.finalizeSpawn(serverworld, this.level.getCurrentDifficultyAt(skavenEntity.blockPosition()), MobSpawnType.REINFORCEMENT, (SpawnGroupData)null, (CompoundTag)null);
-                            serverworld.addFreshEntityWithPassengers(skavenEntity);
+                            skavenEntity.initialize(serverworld, this.world.getLocalDifficulty(skavenEntity.getBlockPos()), SpawnReason.REINFORCEMENT, (EntityData)null, (NbtCompound)null);
+                            serverworld.spawnEntityAndPassengers(skavenEntity);
                             break;
                         }
                     }
@@ -412,17 +400,17 @@ public class SkavenEntity extends Monster implements RangedAttackMob {
     }
 
     protected SoundEvent getStepSound() {
-        return SoundEvents.ZOMBIE_STEP;
+        return SoundEvents.ENTITY_ZOMBIE_STEP;
     }
     protected void playStepSound(BlockPos p_180429_1_, BlockState p_180429_2_) {
         this.playSound(this.getStepSound(), 0.15F, 1.0F);
     }
-    public float getVoicePitch()
+    public float getSoundPitch()
     {
         return 0.4F +this.random.nextFloat()*0.5F;
     }
 
-    protected void populateDefaultEquipmentSlots(DifficultyInstance difficulty)
+    protected void initEquipment(LocalDifficulty difficulty)
     {
         int typepos = Math.max(Types.indexOf(getSkaventype()),0);
         int weapontype;
@@ -433,49 +421,49 @@ public class SkavenEntity extends Monster implements RangedAttackMob {
             weapontype = this.random.nextInt(2);
         }
         if(SkavenEquipment[typepos][weapontype].length>0){
-            this.setItemSlot(EquipmentSlot.MAINHAND,SkavenEquipment[typepos][weapontype][0]);
+            this.equipStack(EquipmentSlot.MAINHAND,SkavenEquipment[typepos][weapontype][0]);
             if(SkavenEquipment[typepos][weapontype].length>1){
-                this.setItemSlot(EquipmentSlot.OFFHAND,SkavenEquipment[typepos][weapontype][1]);
+                this.equipStack(EquipmentSlot.OFFHAND,SkavenEquipment[typepos][weapontype][1]);
             }
         }
     }
 
-    protected void populateDefaultEquipmentEnchantments(DifficultyInstance difficulty) {
-        float f = difficulty.getSpecialMultiplier();
-        if(this.random.nextFloat() > 0.5F) this.enchantSpawnedWeapon(f);
+    protected void updateEnchantments(LocalDifficulty difficulty) {
+        float f = difficulty.getClampedLocalDifficulty();
+        if(this.random.nextFloat() > 0.5F) this.enchantMainHandItem(f);
     }
 
-    public void addAdditionalSaveData(CompoundTag compoundNBT) {
-        super.addAdditionalSaveData(compoundNBT);
+    public void writeCustomDataToNbt(NbtCompound compoundNBT) {
+        super.writeCustomDataToNbt(compoundNBT);
         compoundNBT.putString("SkavenType", this.getSkaventype());
 
     }
 
-    public void readAdditionalSaveData(CompoundTag compound) {
-        super.readAdditionalSaveData(compound);
+    public void readCustomDataFromNbt(NbtCompound compound) {
+        super.readCustomDataFromNbt(compound);
         setSkavenType(compound.getString("SkavenType"));
     }
 
-    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+    public void onTrackedDataSet(TrackedData<?> key) {
         if (SkavenType.equals(key)) {
             this.updateSkavenSize();
         }
-        super.onSyncedDataUpdated(key);
+        super.onTrackedDataSet(key);
     }
 
-    public static boolean checkSkavenSpawnRules(EntityType<SkavenEntity> entityType, ServerLevelAccessor world, MobSpawnType spawnReason, BlockPos pos, Random random) {
-        if (world.getDifficulty() != Difficulty.PEACEFUL && isDarkEnoughToSpawn(world, pos, random) && checkMobSpawnRules(entityType, world, spawnReason, pos, random) && !spawnReason.equals(MobSpawnType.REINFORCEMENT)) {
-            return Objects.equals(world.getBiomeName(pos), Optional.of(Biomes.MOUNTAINS)) || pos.getY() < 60;
+    public static boolean checkSkavenSpawnRules(EntityType<SkavenEntity> entityType, ServerWorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
+        if (world.getDifficulty() != Difficulty.PEACEFUL && isSpawnDark(world, pos, random) && canMobSpawn(entityType, world, spawnReason, pos, random) && !spawnReason.equals(SpawnReason.REINFORCEMENT)) {
+            return Objects.equals(world.getBiomeName(pos), Optional.of(BiomeKeys.MOUNTAINS)) || pos.getY() < 60;
         }
         return false;
     }
 
-    protected float getEquipmentDropChance(EquipmentSlot slot) {
+    protected float getDropChance(EquipmentSlot slot) {
         float f;
         switch (slot.getType()) {
             case HAND -> {
-                f = this.handDropChances[slot.getIndex()];
-                if (this.getMainHandItem().getItem() instanceof IReloadItem) f = 2;
+                f = this.handDropChances[slot.getEntitySlotId()];
+                if (this.getMainHandStack().getItem() instanceof IReloadItem) f = 2;
             }
             case ARMOR -> f = this.armorDropChances[slot.getIndex()];
             default -> f = 0.0F;
@@ -486,8 +474,8 @@ public class SkavenEntity extends Monster implements RangedAttackMob {
 
     @Override
     public boolean isBlocking() {
-        if(this.getOffhandItem().getItem() instanceof ShieldItem && getTarget()!=null && this.random.nextFloat()<0.25){
-            playSound(SoundEvents.SHIELD_BLOCK,1,1);
+        if(this.getOffHandStack().getItem() instanceof ShieldItem && getTarget()!=null && this.random.nextFloat()<0.25){
+            playSound(SoundEvents.ITEM_SHIELD_BLOCK,1,1);
             return true;
         }
         else return false;
