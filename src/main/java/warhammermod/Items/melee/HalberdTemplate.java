@@ -1,19 +1,20 @@
 package warhammermod.Items.melee;
 
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
-import net.fabricmc.fabric.api.object.builder.v1.client.model.FabricModelPredicateProviderRegistry;
+
+import net.minecraft.component.type.AttributeModifierSlot;
+import net.minecraft.component.type.AttributeModifiersComponent;
+import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
-import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.SwordItem;
 import net.minecraft.item.ToolMaterial;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Hand;
@@ -22,28 +23,17 @@ import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.UseAction;
 import net.minecraft.world.World;
 import warhammermod.Entities.Projectile.HalberdEntity;
+import warhammermod.utils.ModEnchantmentHelper;
 import warhammermod.utils.reference;
+
+import java.util.Optional;
 
 public class HalberdTemplate extends SwordItem {
     protected float attackDamage;
-    protected float attackSpeed;
-    private final Multimap<EntityAttribute, EntityAttributeModifier> modifierMultimap;
+
 
     public HalberdTemplate(ToolMaterial tier, Settings properties) {
-        super(tier,5,-2.8F, properties.tab(reference.warhammer));
-        this.attackDamage = 4.5F + tier.getAttackDamage()*2;
-        attackSpeed=-2.8F;
-        ImmutableMultimap.Builder<EntityAttribute, EntityAttributeModifier> builder = ImmutableMultimap.builder();
-        builder.put(EntityAttributes.GENERIC_ATTACK_DAMAGE, new EntityAttributeModifier(ATTACK_DAMAGE_MODIFIER_ID, "Weapon modifier", this.attackDamage, EntityAttributeModifier.Operation.ADDITION));
-        builder.put(EntityAttributes.GENERIC_ATTACK_SPEED, new EntityAttributeModifier(ATTACK_SPEED_MODIFIER_ID, "Weapon modifier", attackSpeed, EntityAttributeModifier.Operation.ADDITION));
-        this.modifierMultimap = builder.build();
-        FabricModelPredicateProviderRegistry.register(this, new Identifier("powerhit"), (stack, clientWorld, entity,i) -> {
-            if (entity == null) {
-                return 0.0F;
-            } else {
-                return entity.getActiveItem() != stack ? 0.0F : entity.getItemUseTime() <20? 0.0F : 1.0F;
-            }
-        });
+        super(tier, properties.attributeModifiers(HalberdTemplate.createAttributeModifiers(tier,4.5F + tier.getAttackDamage()*2,-2.8F)));
     }
 
     public TypedActionResult<ItemStack> use(World level, PlayerEntity player, Hand hand) {
@@ -58,15 +48,17 @@ public class HalberdTemplate extends SwordItem {
     }
 
     public void onStoppedUsing(ItemStack stack, World world, LivingEntity entityLiving, int timeLeft) {
+
         if(getMaxUseTime(stack)-20>=timeLeft && entityLiving instanceof PlayerEntity){
             PlayerEntity player = (PlayerEntity) entityLiving;
 
-            HalberdEntity entity = new HalberdEntity(player,world, getAttackDamage()*1.3F);
-            int i = EnchantmentHelper.getLevel(Enchantments.SHARPNESS, stack);
+            HalberdEntity entity = new HalberdEntity(player,world, getAttackDamage()*1.3F,stack);
+
+            int i = ModEnchantmentHelper.getLevel(world,stack,Enchantments.SHARPNESS);
             if (i > 0) {
                 entity.setpowerDamage(i);
             }
-            int k = EnchantmentHelper.getLevel(Enchantments.KNOCKBACK, stack) + 1;
+            int k = ModEnchantmentHelper.getLevel(world,stack,Enchantments.KNOCKBACK) + 1;
             if (k > 0) {
                 entity.setknockbacklevel(k);
             }
@@ -75,9 +67,7 @@ public class HalberdTemplate extends SwordItem {
 
             world.spawnEntity(entity);
             world.playSound(null,player.getBlockPos(), SoundEvents.ENTITY_PLAYER_ATTACK_KNOCKBACK, SoundCategory.PLAYERS,1,1);
-            stack.damage(1, player, (p_220009_1_) -> {
-                p_220009_1_.sendToolBreakStatus(player.getActiveHand());
-            });
+            stack.damage(1, player, LivingEntity.getSlotForHand(player.getActiveHand()));
             player.getItemCooldownManager().set(this,60);
         }
     }
@@ -86,12 +76,30 @@ public class HalberdTemplate extends SwordItem {
         return 1000;
     }
 
-    public Multimap<EntityAttribute, EntityAttributeModifier> getAttributeModifiers(EquipmentSlot p_111205_1_) {
-        return p_111205_1_ == EquipmentSlot.MAINHAND ? this.modifierMultimap : super.getAttributeModifiers(p_111205_1_);
+    public static AttributeModifiersComponent createAttributeModifiers(ToolMaterial material, float baseAttackDamage, float attackSpeed) {
+        return AttributeModifiersComponent.builder()
+                .add(
+                        EntityAttributes.GENERIC_ATTACK_DAMAGE,
+                        new EntityAttributeModifier(
+                                BASE_ATTACK_DAMAGE_MODIFIER_ID, (double)((float)baseAttackDamage + material.getAttackDamage()), EntityAttributeModifier.Operation.ADD_VALUE
+                        ),
+                        AttributeModifierSlot.MAINHAND
+                )
+                .add(
+                        EntityAttributes.GENERIC_ATTACK_SPEED,
+                        new EntityAttributeModifier(BASE_ATTACK_SPEED_MODIFIER_ID, (double)attackSpeed, EntityAttributeModifier.Operation.ADD_VALUE),
+                        AttributeModifierSlot.MAINHAND
+                )
+                .build();
     }
+
 
     public UseAction getUseAction(ItemStack itemStack) {
         return UseAction.BOW;
+    }
+    @Override
+    public int getMaxUseTime(ItemStack stack, LivingEntity user) {
+        return 72000;
     }
 
     public float getAttackDamage() {

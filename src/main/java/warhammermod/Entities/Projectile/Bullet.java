@@ -2,9 +2,14 @@ package warhammermod.Entities.Projectile;
 
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.world.World;
 import warhammermod.utils.Registry.Entityinit;
+import warhammermod.utils.Registry.ItemsInit;
+
 
 public class Bullet extends  ProjectileBase{
     public Bullet(World world){
@@ -15,24 +20,26 @@ public class Bullet extends  ProjectileBase{
         super(p_i50148_1_, p_i50148_2_);
     }
 
-    public Bullet(World worldin, LivingEntity shooter, float damageIn, EntityType<? extends ProjectileBase> type) {
-        super(worldin, shooter,damageIn, type);
-    }
-    public Bullet(World world, EntityType<? extends ProjectileBase> entity, double x, double y, double z) {
-        super( world,entity, x, y, z);
+    public Bullet(World worldin, LivingEntity shooter, float damageIn, EntityType<? extends ProjectileBase> type,ItemStack stack,ItemStack ammo) {
+        super(type,worldin, shooter,stack,damageIn,ammo);
     }
 
-    public Bullet(LivingEntity shooter, World world, float damage) {
-        this(world, shooter, damage, Entityinit.Bullet);
+    public Bullet(LivingEntity shooter, World world, float damage,ItemStack stack, ItemStack ammo) {
+        this(world, shooter, damage, Entityinit.Bullet,stack, ammo);
     }
 
     public void tick()
     {
-        if (this.world.isClient() && !this.inGround)
+        if (this.getWorld().isClient())
         {
-            this.world.addParticle(ParticleTypes.SMOKE, this.getX(), this.getY(), this.getZ(), 0.0D, 0.0D, 0.0D);
+            this.getWorld().addParticle(ParticleTypes.SMOKE, this.getX(), this.getY(), this.getZ(), 0.0D, 0.0D, 0.0D);
         }
         super.tick();
+    }
+
+    @Override
+    protected ItemStack getDefaultItemStack() {
+        return new ItemStack(ItemsInit.Cartridge);
     }
 
 }

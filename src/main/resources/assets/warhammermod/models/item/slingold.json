@@ -1,7 +1,7 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "warhammermod:items/sling"
+    "layer0": "warhammermod:item/sling"
   },
   "display": {
     "thirdperson_righthand": {

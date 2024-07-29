@@ -14,22 +14,21 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import warhammermod.Items.IReloadItem;
-import warhammermod.Items.ItemsInit;
-import warhammermod.utils.Clientside;
+import warhammermod.utils.Registry.ItemsInit;
 import warhammermod.utils.reference;
 
 @Environment(EnvType.CLIENT)
 @Mixin(InGameHud.class)
 public abstract class gunreload {
     @Shadow @Final private MinecraftClient minecraft;
-    private static final Identifier WIKI_image = new Identifier(reference.modid,"textures/special/modwiki.png");
+    private static final Identifier WIKI_image = Identifier.of(reference.modid,"textures/special/modwiki.png");
 
     @Shadow protected abstract void renderTextureOverlay(Identifier resourceLocation, float f);
 
     @Shadow protected abstract void renderSpyglassOverlay(float f);
 
     @Shadow private float scopeScale;
-
+/*
     @Inject(at = @At("RETURN"), method = "renderCrosshair")
     private void renderreload(MatrixStack poseStack, CallbackInfo ci){
         if(this.minecraft.player != null && this.minecraft.player.getActiveItem().getItem() instanceof IReloadItem) {
@@ -58,5 +57,5 @@ public abstract class gunreload {
         if(Clientside.Wiki_Map.isPressed()){
             this.renderTextureOverlay(WIKI_image,1);
         }
-    }
+    }*/
 }

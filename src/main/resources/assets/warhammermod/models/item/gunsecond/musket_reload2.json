@@ -1,7 +1,7 @@
 {
   "parent": "item/handheld",
   "textures": {
-    "layer0": "warhammermod:items/musket"
+    "layer0": "warhammermod:item/musket"
   },
   "display": {
     "thirdperson_righthand": {

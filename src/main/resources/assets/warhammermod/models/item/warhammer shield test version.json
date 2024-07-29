@@ -46,8 +46,8 @@
     }
   ],
   "textures": {
-    "layer0":"warhammermod:items/shield32",
-    "shield":"warhammermod:items/shield_front"
+    "layer0":"warhammermod:item/shield32",
+    "shield":"warhammermod:item/shield_front"
   },
   "elements": {
     "from":[0,0,0],

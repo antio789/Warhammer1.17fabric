@@ -5,14 +5,14 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.Identifier;
-import warhammermod.Items.ItemsInit;
+import warhammermod.utils.Registry.ItemsInit;
 
 import java.util.Random;
 
 public class functions {
     public static Identifier location(String name)
     {
-        return new Identifier(reference.modid, name);
+        return Identifier.of(reference.modid, name);
     }
 
     static int timer;
@@ -52,11 +52,13 @@ public class functions {
             default:return ItemsInit.Dark_Elf_Shield;
         }
     }
+
     public static Item getRandomarmor(int part){
         int random = new Random().nextInt(2);
         if(random==0){if(part<1)return ItemsInit.DIAMOND_CHAINMAIL_LEGGINGS;else return ItemsInit.DIAMOND_CHAINMAIL_BOOTS;}
         else{if(part<1)return ItemsInit.DIAMOND_CHAINMAIL_HELMET;else return ItemsInit.DIAMOND_CHAINMAIL_CHESTPLATE;}
     }
+
     public static Item[] skulls = {Items.SKELETON_SKULL, Items.CREEPER_HEAD, Items.ZOMBIE_HEAD, Items.PLAYER_HEAD, Items.DRAGON_HEAD};
 
     public static Item getrandomskull(){

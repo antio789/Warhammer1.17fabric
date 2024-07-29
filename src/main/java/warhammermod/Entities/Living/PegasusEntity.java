@@ -2,6 +2,7 @@ package warhammermod.Entities.Living;
 
 
 import net.minecraft.block.Blocks;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MovementType;
@@ -20,36 +21,36 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import warhammermod.utils.Clientside;
 import warhammermod.utils.Registry.Entityinit;
+
+import static warhammermod.Client.Clientside.pegasus_down;
 
 
 public class PegasusEntity extends HorseEntity {
 
     public PegasusEntity(EntityType<? extends HorseEntity> p_i50238_1_, World p_i50238_2_) {
         super(p_i50238_1_, p_i50238_2_);
+        this.getDataTracker().set(MixBlood,false);
+        this.getDataTracker().set(Texture_parameter,0);
     }
 
     /**
-     * all of this crap just to have special colored pegasuses
+     * all of this to have special colored pegasuses
      */
     private static final TrackedData<Boolean> MixBlood = DataTracker.registerData(PegasusEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+
     public static final TrackedData<Integer> Texture_parameter = DataTracker.registerData(PegasusEntity.class, TrackedDataHandlerRegistry.INTEGER);
 
 
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(MixBlood, false);
-        this.dataTracker.startTracking(Texture_parameter, 0);
-    }
-
-    public void writeCustomDataToNbt(NbtCompound p_213281_1_) {
-        super.writeCustomDataToNbt(p_213281_1_);
-        p_213281_1_.putInt("ModVariant", this.getHorseVariant());
-        p_213281_1_.putBoolean("mixblood", this.ismixblood());
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        nbt.putInt("ModVariant", this.getHorseVariant());
+        nbt.putBoolean("mixblood", this.ismixblood());
+        /* not sure what this was here for
         if (!this.items.getStack(1).isEmpty()) {
-            p_213281_1_.put("ArmorItem", this.items.getStack(1).writeNbt(new NbtCompound()));
+            nbt.put("ArmorItem", this.items.getStack(1).writeNbt(new NbtCompound()));
         }
+         */
 
     }
 
@@ -57,7 +58,9 @@ public class PegasusEntity extends HorseEntity {
         super.readCustomDataFromNbt(p_70037_1_);
         this.setHorseVariant(p_70037_1_.getInt("ModVariant"));
         setMixedblood(p_70037_1_.getBoolean("mixblood"));
+        /* not sure what purpose was
         this.updateSaddle();
+         */
     }
 
 
@@ -81,13 +84,36 @@ public class PegasusEntity extends HorseEntity {
         return HorseMarking.byIndex((this.getHorseVariant() & '\uff00') >> 8);
     }
 
+
     public void setMixedblood(Boolean mixblood) {
         this.dataTracker.set(MixBlood, mixblood);
     }
     public Boolean ismixblood() {
         return this.dataTracker.get(MixBlood);
     }
+    /* in progress working on imroving horse colors
+    public PassiveEntity createChild(ServerWorld world, PassiveEntity partner,int ff){
+        if (partner instanceof DonkeyEntity) {
+            MuleEntity muleEntity = EntityType.MULE.create(world);
+            if (muleEntity != null) {
+                this.setChildAttributes(partner, muleEntity);
+            }
 
+            return muleEntity;
+        } else if(partner instanceof PegasusEntity pegasusMate){
+            HorseColor coat = this.random.nextBoolean() ? this.getVariant() : pegasusMate.getVariant();
+            HorseMarking spots = this.random.nextBoolean() ? this.getMarking() : pegasusMate.getMarking();
+            PegasusEntity baby = Entityinit.Pegasus.create(world);
+            if (baby != null){
+                this.setChildAttributes(partner, pegasusMate);
+            }
+        } else if () {
+
+        }
+
+
+    }
+*/
     public PassiveEntity createChild(ServerWorld world, PassiveEntity partner) {
         AbstractHorseEntity pegasus=null;
 
@@ -96,6 +122,7 @@ public class PegasusEntity extends HorseEntity {
         }
 
         else if (partner instanceof PegasusEntity) {
+
             pegasus = Entityinit.Pegasus.create(world);
             ((PegasusEntity) pegasus).setHorseVariant(HorseColor.WHITE, HorseMarking.NONE);
         }
@@ -141,7 +168,7 @@ public class PegasusEntity extends HorseEntity {
     }
 
     /**
-     * fun part of moving the horse
+     * fun part of having the horse fly
      */
 
     private int jumpcounter;
@@ -177,7 +204,7 @@ public class PegasusEntity extends HorseEntity {
 
     public Boolean isgrounded(){
         BlockPos blockpos = this.getVelocityAffectingPos();
-        return!(this.world.getBlockState(blockpos).getBlock()== Blocks.AIR);
+        return!(this.getWorld().getBlockState(blockpos).getBlock()== Blocks.AIR);
     }
 
     public boolean isFlying(){
@@ -188,10 +215,10 @@ public class PegasusEntity extends HorseEntity {
 
     public void travel(Vec3d p_213352_1_) {
         if (this.isAlive()) {
-            if (this.hasPassengers() && this.canBeControlledByRider() && this.isSaddled()) {
+            if (this.hasPassengers() && this.isSaddled()) {// this.canBeControlledByRider() not present anymore?
 
                 LivingEntity livingentity = (LivingEntity) this.getControllingPassenger();
-                if (this.world.isClient()) {
+                if (this.getWorld().isClient()) {
                     ClientPlayerEntity player = (ClientPlayerEntity) livingentity;
                     boolean isjumping = player.input.jumping;
                     if (isjumping) {
@@ -230,13 +257,13 @@ public class PegasusEntity extends HorseEntity {
                         Timer = 0;
                     } else Timer++;
                 }
-                if (isgrounded() || this.onGround) {
+                if (isgrounded() || this.isOnGround()) {
                     setFlyFalse();
                 }
-                if (iselytrafly && world.isClient()) {
+                if (iselytrafly && this.getWorld().isClient()) {
                     elytramovement();
                 }
-                else if (isstationaryflying && world.isClient()) {
+                else if (isstationaryflying && this.getWorld().isClient()) {
                     stationnarymovement(livingentity,f,p_213352_1_.y,f1);
                 }
             }
@@ -290,7 +317,7 @@ public class PegasusEntity extends HorseEntity {
             else
                 vector3d = vector3d.add(-vec3d.x * d13 / dir, d13 * 3.2D, -vec3d.z * d13 / dir);  //normal behaviour
             if (vector3d.y < -0.05) {
-                vector3d = vector3d.add(0, getJumpStrength()*0.6, 0);
+                vector3d = vector3d.add(0, this.jumpStrength*0.6, 0);
             }
 
         }
@@ -301,13 +328,13 @@ public class PegasusEntity extends HorseEntity {
 
         this.setVelocity(vector3d.multiply(0.99F, 0.98F, 0.99F));
         this.move(MovementType.SELF, this.getVelocity());
-        if (this.horizontalCollision && !this.world.isClient()) {
+        if (this.horizontalCollision && !this.getWorld().isClient()) {
             double d14 = this.getVelocity().horizontalLength();
             double d4 = speed - d14;
             float f4 = (float) (d4 * 10.0D - 3.0D);
             if (f4 > 0.0F) {
-                this.playSound(this.getFallSound((int) f4), 1.0F, 1.0F);
-                this.damage(DamageSource.FLY_INTO_WALL, f4);
+                //this.playSound(this.getFallSound((int) f4), 1.0F, 1.0F);
+                this.damage(this.getWorld().getDamageSources().flyIntoWall(), f4);
             }
         }
     }
@@ -316,9 +343,9 @@ public class PegasusEntity extends HorseEntity {
         ClientPlayerEntity player = (ClientPlayerEntity) livingentity;
         double flap = Math.max(Math.abs(Math.cos(Math.PI * this.age / 25)), 0.5) * 0.4;
         if (player.input.jumping) {
-            setVelocity(getVelocity().x, flap * getJumpStrength()*1.5, getVelocity().z);
-        } else if (Clientside.pegasus_down.isPressed()) {
-            setVelocity(getVelocity().x, -flap * getJumpStrength(), getVelocity().z);
+            setVelocity(getVelocity().x, flap * this.getJumpVelocity()*1.5, getVelocity().z);
+        } else if (pegasus_down.isPressed()) {
+            setVelocity(getVelocity().x, -flap * this.getAttributeValue(EntityAttributes.GENERIC_JUMP_STRENGTH), getVelocity().z);
         } else setVelocity(getVelocity().x, (flap - 0.32) * 0.08, getVelocity().z);
 
         this.setMovementSpeed((float) this.getAttributeInstance(EntityAttributes.GENERIC_MOVEMENT_SPEED).getValue());
@@ -354,14 +381,15 @@ public class PegasusEntity extends HorseEntity {
     }
 
     /**
-     * because MC falldamage is stupid
+     * attempted polynomial to define fall damage when flying
      * 5blocks - -0.745
      * 10 -0.964
      * 15 -1.143
      * 20 -1.26
      * 100 -1.85
      *
-     * polynomial approach doesnt work because server doesnt have speed
+     * polynomial approach doesnt work because server doesnt have speed, as the player is controlling the movement from client, but damage still taken from horse.
+     * probably fixable but would take some time to check.
      */
 
     public boolean handleFallDamage(float Falldistance, float modifier,DamageSource damageSource) {

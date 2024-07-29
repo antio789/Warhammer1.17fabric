@@ -5,9 +5,7 @@ import warhammermod.utils.reference;
 
 public class Cartridge extends Item {
     public Cartridge(){
-        super((new Settings()).tab(reference.warhammer));
-
-
+        super(new Item.Settings());
     }
     //warpstone effect
 }

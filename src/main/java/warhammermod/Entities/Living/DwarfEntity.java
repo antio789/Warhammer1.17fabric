@@ -3,19 +3,17 @@ package warhammermod.Entities.Living;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Dynamic;
-import net.minecraft.block.BlockState;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.brain.*;
-import net.minecraft.entity.ai.brain.sensor.GolemLastSeenSensor;
 import net.minecraft.entity.ai.brain.sensor.Sensor;
 import net.minecraft.entity.ai.brain.sensor.SensorType;
-import net.minecraft.entity.ai.pathing.MobNavigation;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
+import net.minecraft.entity.ai.brain.task.VillagerTaskListProvider;
 import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
@@ -23,8 +21,8 @@ import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.mob.IllagerEntity;
 import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.passive.MerchantEntity;
 import net.minecraft.entity.passive.PassiveEntity;
+import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.Item;
@@ -33,37 +31,33 @@ import net.minecraft.item.Items;
 import net.minecraft.item.ShieldItem;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.particle.ParticleTypes;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.DebugInfoSender;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.stat.Stats;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableTextContent;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.village.*;
-import net.minecraft.village.raid.Raid;
 import net.minecraft.world.LocalDifficulty;
 import net.minecraft.world.ServerWorldAccess;
 import net.minecraft.world.World;
 import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.poi.PointOfInterestType;
+import net.minecraft.world.poi.PointOfInterestTypes;
 import org.jetbrains.annotations.Nullable;
-import warhammermod.Entities.Living.AImanager.Data.DwarfProfession;
+import warhammermod.Entities.Living.AImanager.Data.DwarfProfessionRecord;
 import warhammermod.Entities.Living.AImanager.Data.DwarfTrades;
 import warhammermod.Entities.Living.AImanager.DwarfCombattasks;
 import warhammermod.Entities.Living.AImanager.DwarfVillagerTasks;
-import warhammermod.Items.ItemsInit;
+import warhammermod.Entities.Living.AImanager.Data.DwarfTasks.Sensor.LordLastSeenSensor;
+import warhammermod.utils.Registry.ItemsInit;
 import warhammermod.utils.Registry.Entityinit;
 import warhammermod.utils.Registry.WHRegistry;
 
@@ -73,56 +67,75 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
+//fix villagerdata.
+public class DwarfEntity extends VillagerEntity  {
 
-public class DwarfEntity extends MerchantEntity implements InteractionObserver, VillagerDataContainer {
-    //useless but to remove annoying error message
+    @Nullable
+    private PlayerEntity lastCustomer;
+    private int levelUpTimer;
+    private boolean levelingUp;
+
     public DwarfEntity(net.minecraft.world.World world){
         super(Entityinit.DWARF,world);
     }
-    //easier to work with than default mc way thats also private
+    //not using villagerdata as it is not easily modifiable, replaced by a decomposed method.
     private static final TrackedData<Integer> Profession = DataTracker.registerData(DwarfEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<Integer> Level = DataTracker.registerData(DwarfEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private Boolean hasspawnedlord=false;
+    private int restocksToday;
+    private long lastRestockCheckTime;
+    public static final Map<Item, Integer> ITEM_FOOD_VALUES = ImmutableMap.of(ItemsInit.Beer,8, Items.BREAD, 4, Items.POTATO, 1, Items.CARROT, 1, Items.BEETROOT, 1);
+    private static final Set<Item> WANTED_ITEMS = ImmutableSet.of(ItemsInit.Beer,Items.BREAD, Items.POTATO, Items.CARROT, Items.WHEAT, Items.WHEAT_SEEDS, Items.BEETROOT, Items.BEETROOT_SEEDS);
+    public static final Map<MemoryModuleType<GlobalPos>, BiPredicate<DwarfEntity, RegistryEntry<PointOfInterestType>>> POINTS_OF_INTEREST =
+            ImmutableMap.of(MemoryModuleType.HOME, (villager, registryEntry) -> registryEntry.matchesKey(PointOfInterestTypes.HOME),
+                    MemoryModuleType.JOB_SITE, (villager, registryEntry) -> villager.getProfession().heldWorkstation().test(registryEntry),
+                    MemoryModuleType.POTENTIAL_JOB_SITE, (villager, registryEntry) -> DwarfProfessionRecord.IS_ACQUIRABLE_JOB_SITE.test(registryEntry),
+                    MemoryModuleType.MEETING_POINT, (villager, registryEntry) -> registryEntry.matchesKey(PointOfInterestTypes.MEETING));
+    private long lastRestockTime;
+    private int foodLevel;
+    private int experience;
 
+    private static final ImmutableList<MemoryModuleType<?>> MEMORY_MODULES = ImmutableList.of(
+            MemoryModuleType.HOME, MemoryModuleType.JOB_SITE, MemoryModuleType.POTENTIAL_JOB_SITE, MemoryModuleType.MEETING_POINT,
+            MemoryModuleType.MOBS, MemoryModuleType.VISIBLE_MOBS,
+            MemoryModuleType.VISIBLE_VILLAGER_BABIES, MemoryModuleType.NEAREST_PLAYERS,
+            MemoryModuleType.NEAREST_VISIBLE_PLAYER, MemoryModuleType.NEAREST_VISIBLE_TARGETABLE_PLAYER,
+            MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM, MemoryModuleType.ITEM_PICKUP_COOLDOWN_TICKS,
+            MemoryModuleType.WALK_TARGET, MemoryModuleType.LOOK_TARGET,
+            MemoryModuleType.INTERACTION_TARGET, MemoryModuleType.BREED_TARGET,
+            MemoryModuleType.PATH, MemoryModuleType.DOORS_TO_CLOSE, MemoryModuleType.NEAREST_BED,
+            MemoryModuleType.HURT_BY, MemoryModuleType.HURT_BY_ENTITY,
+            MemoryModuleType.NEAREST_HOSTILE, MemoryModuleType.SECONDARY_JOB_SITE,
+            MemoryModuleType.HIDING_PLACE, MemoryModuleType.HEARD_BELL_TIME,
+            MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
+            MemoryModuleType.LAST_SLEPT, MemoryModuleType.LAST_WOKEN,
+            MemoryModuleType.LAST_WORKED_AT_POI, MemoryModuleType.GOLEM_DETECTED_RECENTLY,
+            MemoryModuleType.ATTACK_COOLING_DOWN,MemoryModuleType.ATTACK_TARGET
+            );
+    private static final ImmutableList<SensorType<? extends Sensor<? super VillagerEntity>>> SENSORS = ImmutableList.of(
+            SensorType.NEAREST_LIVING_ENTITIES, SensorType.NEAREST_PLAYERS, SensorType.NEAREST_ITEMS, SensorType.NEAREST_BED, SensorType.HURT_BY,
+            SensorType.VILLAGER_HOSTILES, SensorType.VILLAGER_BABIES, SensorType.SECONDARY_POIS, SensorType.GOLEM_DETECTED);
 
-    public static final Map<Item, Integer> FOOD_POINTS = ImmutableMap.of(ItemsInit.BEER,8, Items.BREAD, 4, Items.POTATO, 1, Items.CARROT, 1, Items.BEETROOT, 1);
-    private static final Set<Item> WANTED_ITEMS = ImmutableSet.of(ItemsInit.BEER,Items.BREAD, Items.POTATO, Items.CARROT, Items.WHEAT, Items.WHEAT_SEEDS, Items.BEETROOT, Items.BEETROOT_SEEDS);
-
-    private int updateMerchantTimer;
-    private boolean increaseProfessionLevelOnUpdate;
-    @Nullable
-    private PlayerEntity lastTradedPlayer;
-    private byte foodLevel;
-    private final VillagerGossips gossips = new VillagerGossips();
-    private long lastGossipTime;
-    private long lastGossipDecayTime;
-    private int villagerXp;
-    private long lastRestockGameTime;
-    private int numberOfRestocksToday;
-    private long lastRestockCheckDayTime;
-    private boolean assignProfessionWhenSpawned;
-    private static final ImmutableList<MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(MemoryModuleType.ATTACK_COOLING_DOWN,MemoryModuleType.HOME, MemoryModuleType.JOB_SITE, MemoryModuleType.POTENTIAL_JOB_SITE, MemoryModuleType.MEETING_POINT, MemoryModuleType.MOBS, MemoryModuleType.VISIBLE_MOBS, MemoryModuleType.VISIBLE_VILLAGER_BABIES, MemoryModuleType.NEAREST_PLAYERS, MemoryModuleType.NEAREST_VISIBLE_PLAYER, MemoryModuleType.NEAREST_VISIBLE_TARGETABLE_PLAYER, MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM, MemoryModuleType.WALK_TARGET, MemoryModuleType.LOOK_TARGET, MemoryModuleType.INTERACTION_TARGET, MemoryModuleType.BREED_TARGET, MemoryModuleType.PATH, MemoryModuleType.DOORS_TO_CLOSE, MemoryModuleType.NEAREST_BED, MemoryModuleType.HURT_BY, MemoryModuleType.HURT_BY_ENTITY, MemoryModuleType.NEAREST_HOSTILE, MemoryModuleType.SECONDARY_JOB_SITE, MemoryModuleType.HIDING_PLACE, MemoryModuleType.HEARD_BELL_TIME, MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, MemoryModuleType.LAST_SLEPT, MemoryModuleType.LAST_WOKEN, MemoryModuleType.LAST_WORKED_AT_POI, MemoryModuleType.GOLEM_DETECTED_RECENTLY,MemoryModuleType.ATTACK_TARGET);
-    private static final ImmutableList<SensorType<? extends Sensor<? super DwarfEntity>>> SENSOR_TYPES = ImmutableList.of(SensorType.NEAREST_LIVING_ENTITIES, SensorType.NEAREST_PLAYERS, SensorType.NEAREST_ITEMS, SensorType.NEAREST_BED, SensorType.HURT_BY, SensorType.VILLAGER_HOSTILES, WHRegistry.Hostiles, WHRegistry.VISIBLE_VILLAGER_BABIES, WHRegistry.SECONDARY_POIS, WHRegistry.Lord_LastSeen);
-    public static final Map<MemoryModuleType<GlobalPos>, BiPredicate<DwarfEntity, PointOfInterestType>> POI_MEMORIES = ImmutableMap.of(MemoryModuleType.HOME, (dwarfEntity, pointOfInterestType) -> {
-        return pointOfInterestType == PointOfInterestType.HOME;
-    }, MemoryModuleType.JOB_SITE, (dwarfEntity, pointOfInterestType) -> {
-        return dwarfEntity.getProfession().getPointOfInterest() == pointOfInterestType;
-    }, MemoryModuleType.POTENTIAL_JOB_SITE, (dwarfEntity, pointOfInterestType) -> {
-        return PointOfInterestType.ALL_JOBS.test(pointOfInterestType);
-    }, MemoryModuleType.MEETING_POINT, (dwarfEntity, pointOfInterestType) -> {
-        return pointOfInterestType == PointOfInterestType.MEETING;
-    });
+    private static final ImmutableList<SensorType<? extends Sensor<? super DwarfEntity>>> SENSOR_TYPES = ImmutableList.of(
+            SensorType.NEAREST_LIVING_ENTITIES, SensorType.NEAREST_PLAYERS, SensorType.NEAREST_ITEMS, SensorType.NEAREST_BED, SensorType.HURT_BY,
+            SensorType.VILLAGER_HOSTILES, WHRegistry.Hostiles, WHRegistry.VISIBLE_VILLAGER_BABIES, WHRegistry.SECONDARY_POIS, WHRegistry.Lord_LastSeen);
     /**
      * initialization
      */
 
     public DwarfEntity(EntityType<? extends DwarfEntity> entityType, World world) {
         super(entityType, world);
-        ((MobNavigation)this.getNavigation()).setCanPathThroughDoors(true);
-        this.getNavigation().setCanSwim(true);
-        this.setCanPickUpLoot(true);
         this.setVillagerDataBase();
         this.setEquipment(this.getProfession());
+        this.initDataTracker();
+    }
+
+    @Override
+    @Nullable
+    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
+        if (spawnReason == SpawnReason.BREEDING) {
+            this.setProfession(DwarfProfessionRecord.Warrior.ID());
+        }
+        return super.initialize(world, difficulty, spawnReason, entityData);
     }
 
 
@@ -130,12 +143,13 @@ public class DwarfEntity extends MerchantEntity implements InteractionObserver, 
     /**
      * all custom profession
      */
-    @Deprecated
-    public void setVillagerData(VillagerData p_213753_1_) {
-    }
-    @Deprecated
+
+    @Override
     public VillagerData getVillagerData() {
         return null;
+    }
+    @Override
+    public void setVillagerData(VillagerData villagerData) {
     }
 
     public int getProfessionID()
@@ -148,43 +162,46 @@ public class DwarfEntity extends MerchantEntity implements InteractionObserver, 
     }
 
     public void setVillagerDataBase() {
-        this.setVillagerData(DwarfProfession.Warrior.getID(),1);
+        this.setVillagerData(DwarfProfessionRecord.Warrior.ID(),1);
     }
+
+
 
     public void setVillagerData(int prof,int level) {
 
-        if (getProfession().getID() != prof) {
+        if (getProfession().ID() != prof) {
             this.offers = null;
         }
-        if(dataTracker.get(Profession)!=DwarfProfession.Lord.getID()){
+        if(dataTracker.get(Profession)!=DwarfProfessionRecord.Lord.ID()){
             this.dataTracker.set(Profession,prof);}
         this.dataTracker.set(Level,level);
     }
 
-    public void registerVillagerData() {
 
-        this.dataTracker.startTracking(Profession, DwarfProfession.Warrior.getID());
-        this.dataTracker.startTracking(Level,1);
-    }
 
     public void setVillagerlevel(int level) {
         setVillagerData(getProfessionID(),level);
     }
 
-    public void setVillagerProfession(DwarfProfession profession){
-        setVillagerData(profession.getID(), getProfessionLevel());
+    public void setVillagerProfession(DwarfProfessionRecord profession){
+        setVillagerData(profession.ID(), getProfessionLevel());
         this.setEquipment(profession);
         this.updateAttributes(profession);
     }
 
-
-    public DwarfProfession getProfession(){
-        for(DwarfProfession prof : DwarfProfession.Profession){
+/*
+    public DwarfProfessionRecord getProfession(){
+        for(DwarfProfessionRecord prof : DwarfProfession.Profession){
             if (prof.getID()==getProfessionID()){
                 return prof;
             }
         }
         return DwarfProfession.Warrior;
+    }
+
+ */
+    public DwarfProfessionRecord getProfession(){
+        return this.getRegistryManager().get(WHRegistry.DwarfProfessionKey).stream().filter(p -> p.ID()==getProfessionID()).findFirst().orElse(DwarfProfessionRecord.Warrior);
     }
 
 
@@ -216,7 +233,7 @@ public class DwarfEntity extends MerchantEntity implements InteractionObserver, 
     /**
      * all related to combat capabilities
      */
-    protected void setEquipment(DwarfProfession prof)
+    protected void setEquipment(DwarfProfessionRecord prof)
     {
         if(hasStackEquipped(EquipmentSlot.MAINHAND)){
             this.equipStack(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
@@ -224,12 +241,12 @@ public class DwarfEntity extends MerchantEntity implements InteractionObserver, 
         if(hasStackEquipped(EquipmentSlot.OFFHAND)){
             this.equipStack(EquipmentSlot.OFFHAND, ItemStack.EMPTY);
         }
-        this.equipStack(EquipmentSlot.MAINHAND,new ItemStack(prof.getItemtoslot(0)));
-        this.equipStack(EquipmentSlot.OFFHAND,new ItemStack(prof.getItemtoslot(1)));
+        this.equipStack(EquipmentSlot.MAINHAND,new ItemStack(prof.mainhainditem()));
+        this.equipStack(EquipmentSlot.OFFHAND,new ItemStack(prof.offhanditem()));
     }
 
-    protected void updateAttributes(DwarfProfession prof){
-        if(prof.equals(DwarfProfession.Slayer)){
+    protected void updateAttributes(DwarfProfessionRecord prof){
+        if(prof.equals(DwarfProfessionRecord.Slayer)){
             this.getAttributeInstance(EntityAttributes.GENERIC_ARMOR).setBaseValue(0);
         }
     }
@@ -259,146 +276,142 @@ public class DwarfEntity extends MerchantEntity implements InteractionObserver, 
         return this.isBaby() ? (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.4F : (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 0.6F;
     }
 
-    public void readCustomDataFromNbt(NbtCompound compound) {
-        super.readCustomDataFromNbt(compound);
-        this.setVillagerData(compound.getInt("profession"),compound.getInt("level"));
-        this.hasspawnedlord=compound.getBoolean("canspawnlord");
-
-        if (compound.contains("Offers", 10)) {
-            this.offers = new TradeOfferList(compound.getCompound("Offers"));
-        }
-
-        if (compound.contains("FoodLevel", 1)) {
-            this.foodLevel = compound.getByte("FoodLevel");
-        }
-
-        NbtList listnbt = compound.getList("Gossips", 10);
-        this.gossips.deserialize(new Dynamic<>(NbtOps.INSTANCE, listnbt));
-        if (compound.contains("Xp", 3)) {
-            this.villagerXp = compound.getInt("Xp");
-        }
-
-        this.lastRestockGameTime = compound.getLong("LastRestock");
-        this.lastGossipDecayTime = compound.getLong("LastGossipDecay");
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        this.setVillagerData(nbt.getInt("profession"),nbt.getInt("level"));
+        Boolean hasspawnedlord = nbt.getBoolean("canspawnlord");
         this.setCanPickUpLoot(true);
-        if (this.world instanceof ServerWorld) {
-            this.refreshBrain((ServerWorld)this.world);
-        }
-
-        this.numberOfRestocksToday = compound.getInt("RestocksToday");
-        if (compound.contains("AssignProfessionWhenSpawned")) {
-            this.assignProfessionWhenSpawned = compound.getBoolean("AssignProfessionWhenSpawned");
-        }
+        this.lastRestockTime = nbt.getLong("LastRestockDwarf");
+        this.restocksToday = nbt.getInt("RestocksTodayDwarf");
+        nbt.putByte("FoodLevelDwarf", (byte)this.foodLevel);
 
     }
 
-    public void writeCustomDataToNbt(NbtCompound compound) {
-        super.writeCustomDataToNbt(compound);
 
-        compound.putInt("level", this.getProfessionLevel());
-        compound.putInt("profession",this.getProfessionID());
-
-        compound.putByte("FoodLevel", this.foodLevel);
-        compound.put("Gossips", this.gossips.serialize(NbtOps.INSTANCE).getValue());
-        compound.putInt("Xp", this.villagerXp);
-        compound.putLong("LastRestock", this.lastRestockGameTime);
-        compound.putLong("LastGossipDecay", this.lastGossipDecayTime);
-        compound.putInt("RestocksToday", this.numberOfRestocksToday);
-        if (this.assignProfessionWhenSpawned) {
-            compound.putBoolean("AssignProfessionWhenSpawned", true);
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        if (nbt.contains("FoodLevel", NbtElement.BYTE_TYPE)) {
+            this.foodLevel = nbt.getByte("FoodLevel");
         }
+        nbt.putInt("level", this.getProfessionLevel());
+        nbt.putInt("profession",this.getProfessionID());
+        nbt.putLong("LastRestockdwarf", this.lastRestockTime);
+        nbt.putInt("RestocksTodayDwarf", this.restocksToday);
+
 
     }
 
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(Profession,
-                DwarfProfession.Warrior.getID());
-        this.dataTracker.startTracking(Level,1);
+    private void initDataTracker() {
+        this.dataTracker.set(Profession, DwarfProfessionRecord.Warrior.ID());
+        this.dataTracker.set(Level,1);
     }
-
+    @Nullable
     public DwarfEntity createChild(ServerWorld world, PassiveEntity entity) {
         double d0 = this.random.nextDouble();
 
         DwarfEntity dwarfEntity = new DwarfEntity(Entityinit.DWARF, world);
-        dwarfEntity.initialize(world, world.getLocalDifficulty(dwarfEntity.getBlockPos()), SpawnReason.BREEDING, (EntityData)null, (NbtCompound)null);
+        dwarfEntity.initialize(world, world.getLocalDifficulty(dwarfEntity.getBlockPos()), SpawnReason.BREEDING, (EntityData)null);
         return dwarfEntity;
     }
 
-    private void registerBrainGoals(Brain<DwarfEntity> p_213744_1_) {
-        DwarfProfession villagerprofession = this.getProfession();
-        if (this.isBaby()) {
-            p_213744_1_.setSchedule(Schedule.VILLAGER_BABY);
-            p_213744_1_.setTaskList(Activity.PLAY, DwarfVillagerTasks.getPlayPackage(0.5F));
-            p_213744_1_.setTaskList(Activity.PANIC, DwarfVillagerTasks.getPanicPackage(villagerprofession, 0.5F));
-        } else {
-            p_213744_1_.setSchedule(Schedule.VILLAGER_DEFAULT);
 
-            p_213744_1_.setTaskList(Activity.PANIC, DwarfCombattasks.getAttackPackage(villagerprofession, 0.5F));
-            p_213744_1_.setTaskList(Activity.WORK, DwarfVillagerTasks.getWorkPackage(villagerprofession, 0.5F), ImmutableSet.of(Pair.of(MemoryModuleType.JOB_SITE, MemoryModuleState.VALUE_PRESENT)));
-        }
 
-        p_213744_1_.setTaskList(Activity.CORE, DwarfVillagerTasks.getCorePackage(villagerprofession, 0.5F));
-        p_213744_1_.setTaskList(Activity.MEET, DwarfVillagerTasks.getMeetPackage(villagerprofession, 0.5F), ImmutableSet.of(Pair.of(MemoryModuleType.MEETING_POINT, MemoryModuleState.VALUE_PRESENT)));
-        p_213744_1_.setTaskList(Activity.REST, DwarfVillagerTasks.getRestPackage(villagerprofession, 0.5F));
-        p_213744_1_.setTaskList(Activity.IDLE, DwarfVillagerTasks.getIdlePackage(this,villagerprofession, 0.5F));
-        p_213744_1_.setTaskList(Activity.PRE_RAID, DwarfVillagerTasks.getPreRaidPackage(villagerprofession, 0.5F));
-        p_213744_1_.setTaskList(Activity.RAID, DwarfVillagerTasks.getRaidPackage(villagerprofession, 0.5F));
-        p_213744_1_.setTaskList(Activity.HIDE, DwarfVillagerTasks.getHidePackage(villagerprofession, 0.5F));
-        p_213744_1_.setCoreActivities(ImmutableSet.of(Activity.CORE));
-        p_213744_1_.setDefaultActivity(Activity.IDLE);
-        p_213744_1_.doExclusively(Activity.IDLE);
-        p_213744_1_.refreshActivities(this.world.getTimeOfDay(), this.world.getTime());
+    public Brain.Profile<DwarfEntity> createDwarfBrainProfile() {
+        return Brain.createProfile(MEMORY_MODULES, SENSORS);
     }
 
-    public void spawnGolemIfNeeded(ServerWorld p_242367_1_, long p_242367_2_, int p_242367_4_) {
-        if (this.wantsToSpawnGolem(p_242367_2_)) {
+    @Override
+    public Brain<?> deserializeBrain(Dynamic<?> dynamic) {
+        Brain<DwarfEntity> brain = this.createDwarfBrainProfile().deserialize(dynamic);
+        this.initBrain(brain);
+        return brain;
+    }
+
+    @Override
+    public void reinitializeBrain(ServerWorld world) {
+        Brain<DwarfEntity> brain = (Brain<DwarfEntity>) this.brain;
+        brain.stopAllTasks(world, this);
+        this.brain = brain.copy();
+        this.initBrain((Brain<DwarfEntity>) this.brain);
+    }
+
+    private void initBrain(Brain<DwarfEntity> entityBrain) {
+        DwarfProfessionRecord dwarfProfession = this.getProfession();
+        if (this.isBaby()) {
+            entityBrain.setSchedule(Schedule.VILLAGER_BABY);
+            entityBrain.setTaskList(Activity.PLAY, VillagerTaskListProvider.createPlayTasks(0.5F));
+            entityBrain.setTaskList(Activity.PANIC, VillagerTaskListProvider.createPanicTasks(VillagerProfession.NONE, 0.5F));
+        } else {
+            entityBrain.setSchedule(Schedule.VILLAGER_DEFAULT);
+
+            entityBrain.setTaskList(Activity.PANIC, DwarfCombattasks.getAttackPackage(dwarfProfession, 0.5F));
+            entityBrain.setTaskList(Activity.WORK, DwarfVillagerTasks.createWorkTasks(dwarfProfession, 0.5F), ImmutableSet.of(Pair.of(MemoryModuleType.JOB_SITE, MemoryModuleState.VALUE_PRESENT)));
+        }
+
+        entityBrain.setTaskList(Activity.CORE, DwarfVillagerTasks.createCoreTasks(dwarfProfession, 0.5F));
+        VillagerProfession villagerProfession = VillagerProfession.NONE;
+        entityBrain.setTaskList(Activity.MEET, VillagerTaskListProvider.createMeetTasks(villagerProfession, 0.5f), ImmutableSet.of(Pair.of(MemoryModuleType.MEETING_POINT, MemoryModuleState.VALUE_PRESENT)));
+        entityBrain.setTaskList(Activity.REST, VillagerTaskListProvider.createRestTasks(villagerProfession, 0.5f));
+        entityBrain.setTaskList(Activity.IDLE, VillagerTaskListProvider.createIdleTasks(villagerProfession, 0.5f));
+        entityBrain.setTaskList(Activity.PRE_RAID, VillagerTaskListProvider.createPreRaidTasks(villagerProfession, 0.5f));
+        entityBrain.setTaskList(Activity.RAID, VillagerTaskListProvider.createRaidTasks(villagerProfession, 0.5f));
+        entityBrain.setTaskList(Activity.HIDE, VillagerTaskListProvider.createHideTasks(villagerProfession, 0.5f));
+        entityBrain.setCoreActivities(ImmutableSet.of(Activity.CORE));
+        entityBrain.setDefaultActivity(Activity.IDLE);
+        entityBrain.doExclusively(Activity.IDLE);
+        entityBrain.refreshActivities(this.getWorld().getTimeOfDay(), this.getWorld().getTime());
+    }
+    @Override
+    public void summonGolem(ServerWorld world, long time, int requiredCount){
+        this.SummonLord(world, time, requiredCount);
+    }
+    public void SummonLord(ServerWorld serverWorld, long time, int requiredCount) {
+        if (this.canSummonGolem(time)) {
             Box axisalignedbb = this.getBoundingBox().expand(10.0D, 10.0D, 10.0D);
-            List<DwarfEntity> list = p_242367_1_.getNonSpectatingEntities(DwarfEntity.class, axisalignedbb);
-            List<DwarfEntity> list1 = list.stream().filter((p_226554_2_) -> {
-                return p_226554_2_.wantsToSpawnGolem(p_242367_2_);
+            List<DwarfEntity> list = serverWorld.getNonSpectatingEntities(DwarfEntity.class, axisalignedbb);
+            List<DwarfEntity> list1 = list.stream().filter((dwarfEntity) -> {
+                return dwarfEntity.canSummonGolem(time);
             }).limit(5L).collect(Collectors.toList());
-            if (list1.size() >= p_242367_4_) {
-                DwarfEntity lord = this.trySpawnGolem(p_242367_1_);
-                if (lord != null) {
-                    lord.setVillagerProfession(DwarfProfession.Lord);
-                    list.forEach(GolemLastSeenSensor::rememberIronGolem);
+            if (list1.size() >= requiredCount) {
+                if (this.tryspawnlord(serverWorld)) {
+                    list.forEach(LordLastSeenSensor::rememberIronGolem);
                 }
             }
         }
     }
 
-    public boolean wantsToSpawnGolem(long p_223350_1_) {
-        if (!this.golemSpawnConditionsMet(this.world.getTime())) {
+    @Override
+    public boolean canSummonGolem(long time) {
+        if (!this.golemSpawnConditionsMet(this.getWorld().getTime())) {
             return false;
         } else {
             return !this.brain.hasMemoryModule(MemoryModuleType.GOLEM_DETECTED_RECENTLY);
         }
     }
 
-    @Nullable
-    private DwarfEntity trySpawnGolem(ServerWorld p_213759_1_) {
-        BlockPos blockpos = this.getBlockPos();
-
-        for(int i = 0; i < 10; ++i) {
-            double d0 = (double)(p_213759_1_.random.nextInt(16) - 8);
-            double d1 = (double)(p_213759_1_.random.nextInt(16) - 8);
-            BlockPos blockpos1 = this.findSpawnPositionForGolemInColumn(blockpos, d0, d1);
-            if (blockpos1 != null) {
-                DwarfEntity lord = Entityinit.DWARF.create(p_213759_1_, null, null, null, blockpos1, SpawnReason.MOB_SUMMONED, false, false);
-                if (lord != null) {
-                    if (lord.canSpawn(p_213759_1_, SpawnReason.MOB_SUMMONED) && lord.canSpawn(p_213759_1_)) {
-                        p_213759_1_.spawnEntityAndPassengers(lord);
-                        return lord;
-                    }
-
-                    lord.discard();
-                }
-            }
+    private boolean tryspawnlord(ServerWorld world){
+        int i = MathHelper.floor(this.getX());
+        int j = MathHelper.floor(this.getY());
+        int k = MathHelper.floor(this.getZ());
+        DwarfEntity dwarfEntity = Entityinit.DWARF.create(world);
+        for(int l = 0; l < 15; ++l) {
+            int i1 = i + MathHelper.nextInt(this.random, 2, 6) * MathHelper.nextInt(this.random, -1, 1);
+            int j1 = j + MathHelper.nextInt(this.random, 2, 6) * MathHelper.nextInt(this.random, -1, 1);
+            int k1 = k + MathHelper.nextInt(this.random, 2, 6) * MathHelper.nextInt(this.random, -1, 1);
+            BlockPos blockpos = new BlockPos(i1, j1, k1);
+            EntityType<?> entityType = dwarfEntity.getType();
+            if (!SpawnRestriction.isSpawnPosAllowed(entityType, this.getWorld(), blockpos) || !SpawnRestriction.canSpawn(entityType, world, SpawnReason.REINFORCEMENT, blockpos, this.getWorld().random)) continue;
+            dwarfEntity.setPosition(i1, j1, k1);
+            if ( !this.getWorld().doesNotIntersectEntities(dwarfEntity) || !this.getWorld().isSpaceEmpty(dwarfEntity) || this.getWorld().containsFluid(dwarfEntity.getBoundingBox())) continue;
+            dwarfEntity.initialize(world,world.getLocalDifficulty(dwarfEntity.getBlockPos()),SpawnReason.MOB_SUMMONED,null);
+            dwarfEntity.setProfession(DwarfProfessionRecord.Lord.ID());
+            world.spawnEntityAndPassengers(dwarfEntity);
+            return true;
         }
-
-        return null;
+        return false;
     }
+
+
 
     private boolean golemSpawnConditionsMet(long gametime) {
         Optional<Long> optional = this.brain.getOptionalRegisteredMemory(MemoryModuleType.LAST_SLEPT);
@@ -413,641 +426,321 @@ public class DwarfEntity extends MerchantEntity implements InteractionObserver, 
         return this.getProfessionLevel() == 5;
     }
 
+    @Override
+    public boolean canGather(ItemStack stack) {
+        Item item = stack.getItem();
+        return (WANTED_ITEMS.contains(item) || this.getProfession().gatherableItems().contains(item)) && this.getInventory().canInsert(stack);
+    }
     /**
-     * copy from villager includes everything that doesnt needs to be modified
+     * other
      */
 
-    public Brain<DwarfEntity> getBrain() {
-        return (Brain<DwarfEntity>)super.getBrain();
-    }
-
-    protected Brain.Profile<DwarfEntity> createBrainProfile() {
-        return Brain.createProfile(MEMORY_TYPES, SENSOR_TYPES);
-    }
-
-    protected Brain<?> deserializeBrain(Dynamic<?> p_213364_1_) {
-        Brain<DwarfEntity> brain = this.createBrainProfile().deserialize(p_213364_1_);
-        this.registerBrainGoals(brain);
-        return brain;
-    }
-
-    public void refreshBrain(ServerWorld p_213770_1_) {
-        Brain<DwarfEntity> brain = this.getBrain();
-        brain.stopAllTasks(p_213770_1_, this);
-        this.brain = brain.copy();
-        this.registerBrainGoals(this.getBrain());
-    }
-
-
-
-    protected void onGrowUp() {
-        super.onGrowUp();
-        if (this.world instanceof ServerWorld) {
-            this.refreshBrain((ServerWorld)this.world);
+    public void releaseTicketFor(MemoryModuleType<GlobalPos> pos) {
+        if (!(this.getWorld() instanceof ServerWorld)) {
+            return;
         }
-
-    }
-
-    public static DefaultAttributeContainer.Builder createAttributes() {
-        return MobEntity.createMobAttributes().add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.5D).add(EntityAttributes.GENERIC_FOLLOW_RANGE, 48.0D);
-    }
-
-    public boolean assignProfessionWhenSpawned() {
-        return this.assignProfessionWhenSpawned;
-    }
-
-    protected void mobTick() {
-        DwarfCombattasks.updateActivity(this);
-        this.world.getProfiler().push("villagerBrain");
-        this.getBrain().tick((ServerWorld)this.world, this);
-        this.world.getProfiler().pop();
-        if (this.assignProfessionWhenSpawned) {
-            this.assignProfessionWhenSpawned = false;
-        }
-
-        if (!this.hasCustomer() && this.updateMerchantTimer > 0) {
-            --this.updateMerchantTimer;
-            if (this.updateMerchantTimer <= 0) {
-                if (this.increaseProfessionLevelOnUpdate) {
-                    this.increaseMerchantCareer();
-                    this.increaseProfessionLevelOnUpdate = false;
-                }
-
-                this.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, 200, 0));
+        MinecraftServer minecraftServer = ((ServerWorld)this.getWorld()).getServer();
+        this.brain.getOptionalRegisteredMemory(pos).ifPresent(posx -> {
+            ServerWorld serverWorld = minecraftServer.getWorld(posx.dimension());
+            if (serverWorld == null) {
+                return;
             }
-        }
-
-        if (this.lastTradedPlayer != null && this.world instanceof ServerWorld) {
-            ((ServerWorld)this.world).handleInteraction(EntityInteraction.TRADE, this.lastTradedPlayer, this);
-            this.world.sendEntityStatus(this, (byte)14);
-            this.lastTradedPlayer = null;
-        }
-
-        if (!this.isAiDisabled() && this.random.nextInt(100) == 0) {
-            Raid raid = ((ServerWorld)this.world).getRaidAt(this.getBlockPos());
-            if (raid != null && raid.isActive() && !raid.isFinished()) {
-                this.world.sendEntityStatus(this, (byte)42);
+            PointOfInterestStorage pointOfInterestStorage = serverWorld.getPointOfInterestStorage();
+            Optional<RegistryEntry<PointOfInterestType>> optional = pointOfInterestStorage.getType(posx.pos());
+            BiPredicate<DwarfEntity, RegistryEntry<PointOfInterestType>> biPredicate = POINTS_OF_INTEREST.get(pos);
+            if (optional.isPresent() && biPredicate.test(this, optional.get())) {
+                pointOfInterestStorage.releaseTicket(posx.pos());
+                DebugInfoSender.sendPointOfInterest(serverWorld, posx.pos());
             }
-        }
-
-        if (this.getProfession() == DwarfProfession.Warrior && this.hasCustomer()) {
-            this.resetCustomer();
-        }
-
-        super.mobTick();
-    }
-
-    public void tick() {
-        super.tick();
-        if (this.getHeadRollingTimeLeft() > 0) {
-            this.setHeadRollingTimeLeft(this.getHeadRollingTimeLeft() - 1);
-        }
-
-        this.maybeDecayGossip();
-    }
-
-    public ActionResult interactMob(PlayerEntity p_230254_1_, Hand p_230254_2_) {
-        ItemStack itemstack = p_230254_1_.getStackInHand(p_230254_2_);
-        if (itemstack.getItem() != Items.VILLAGER_SPAWN_EGG && this.isAlive() && !this.hasCustomer() && !this.isSleeping() && !p_230254_1_.shouldCancelInteraction()) {
-            if (this.isBaby()) {
-                this.setUnhappy();
-                return ActionResult.success(this.world.isClient);
-            } else {
-                boolean flag = this.getOffers().isEmpty() && this.isAttacking();
-                if (p_230254_2_ == Hand.MAIN_HAND) {
-                    if (flag && !this.world.isClient) {
-                        this.setUnhappy();
-                    }
-
-                    p_230254_1_.incrementStat(Stats.TALKED_TO_VILLAGER);
-                }
-
-                if (flag) {
-                    return ActionResult.success(this.world.isClient);
-                } else {
-                    if (!this.world.isClient && !this.offers.isEmpty()) {
-                        this.startTrading(p_230254_1_);
-                    }
-
-                    return ActionResult.success(this.world.isClient);
-                }
-            }
-        } else {
-            return super.interactMob(p_230254_1_, p_230254_2_);
-        }
-    }
-
-    private void setUnhappy() {
-        this.setHeadRollingTimeLeft(40);
-        if (!this.world.isClient()) {
-            this.playSound(SoundEvents.ENTITY_VILLAGER_NO, this.getSoundVolume(), this.getSoundPitch());
-        }
-
-    }
-
-    private void startTrading(PlayerEntity p_213740_1_) {
-        this.updateSpecialPrices(p_213740_1_);
-        this.setCustomer(p_213740_1_);
-        this.sendOffers(p_213740_1_, this.getDisplayName(), this.getProfessionLevel());
-    }
-
-    public void setCustomer(@Nullable PlayerEntity p_70932_1_) {
-        boolean flag = this.getCustomer() != null && p_70932_1_ == null;
-        super.setCustomer(p_70932_1_);
-        if (flag) {
-            this.resetCustomer();
-        }
-
-    }
-
-    protected void resetCustomer() {
-        super.resetCustomer();
-        this.resetSpecialPrices();
-    }
-
-    private void resetSpecialPrices() {
-        for(TradeOffer merchantoffer : this.getOffers()) {
-            merchantoffer.clearSpecialPrice();
-        }
-
-    }
-
-    public boolean canRefreshTrades() {
-        return true;
-    }
-
-    public void restock() {
-        this.updateDemand();
-
-        for(TradeOffer merchantoffer : this.getOffers()) {
-            merchantoffer.resetUses();
-        }
-
-        this.lastRestockGameTime = this.world.getTime();
-        ++this.numberOfRestocksToday;
-    }
-
-    private boolean needsToRestock() {
-        for(TradeOffer merchantoffer : this.getOffers()) {
-            if (merchantoffer.hasBeenUsed()) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private boolean allowedToRestock() {
-        return this.numberOfRestocksToday == 0 || this.numberOfRestocksToday < 2 && this.world.getTime() > this.lastRestockGameTime + 2400L;
-    }
-
-    public boolean shouldRestock() {
-        long i = this.lastRestockGameTime + 12000L;
-        long j = this.world.getTime();
-        boolean flag = j > i;
-        long k = this.world.getTimeOfDay();
-        if (this.lastRestockCheckDayTime > 0L) {
-            long l = this.lastRestockCheckDayTime / 24000L;
-            long i1 = k / 24000L;
-            flag |= i1 > l;
-        }
-
-        this.lastRestockCheckDayTime = k;
-        if (flag) {
-            this.lastRestockGameTime = j;
-            this.resetNumberOfRestocks();
-        }
-
-        return this.allowedToRestock() && this.needsToRestock();
-    }
-
-    private void catchUpDemand() {
-        int i = 2 - this.numberOfRestocksToday;
-        if (i > 0) {
-            for(TradeOffer merchantoffer : this.getOffers()) {
-                merchantoffer.resetUses();
-            }
-        }
-
-        for(int j = 0; j < i; ++j) {
-            this.updateDemand();
-        }
-
-    }
-
-    private void updateDemand() {
-        for(TradeOffer merchantoffer : this.getOffers()) {
-            merchantoffer.updateDemandBonus();
-        }
-
-    }
-
-    private void updateSpecialPrices(PlayerEntity p_213762_1_) {
-        int i = this.getPlayerReputation(p_213762_1_);
-        if (i != 0) {
-            for(TradeOffer merchantoffer : this.getOffers()) {
-                merchantoffer.increaseSpecialPrice(-MathHelper.floor((float)i * merchantoffer.getPriceMultiplier()));
-            }
-        }
-
-        if (p_213762_1_.hasStatusEffect(StatusEffects.HERO_OF_THE_VILLAGE)) {
-            StatusEffectInstance effectinstance = p_213762_1_.getStatusEffect(StatusEffects.HERO_OF_THE_VILLAGE);
-            int k = effectinstance.getAmplifier();
-
-            for(TradeOffer merchantoffer1 : this.getOffers()) {
-                double d0 = 0.3D + 0.0625D * (double)k;
-                int j = (int)Math.floor(d0 * (double)merchantoffer1.getOriginalFirstBuyItem().getCount());
-                merchantoffer1.increaseSpecialPrice(-Math.max(j, 1));
-            }
-        }
-
-    }
-
-    public boolean canImmediatelyDespawn(double p_213397_1_) {
-        return false;
-    }
-
-    @Nullable
-    protected SoundEvent getAmbientSound() {
-        if (this.isSleeping()) {
-            return null;
-        } else {
-            return this.hasCustomer() ? SoundEvents.ENTITY_VILLAGER_TRADE : SoundEvents.ENTITY_VILLAGER_AMBIENT;
-        }
-    }
-
-    protected SoundEvent getHurtSound(DamageSource p_184601_1_) {
-        return SoundEvents.ENTITY_VILLAGER_HURT;
-    }
-
-    protected SoundEvent getDeathSound() {
-        return SoundEvents.ENTITY_VILLAGER_DEATH;
-    }
-
-    public void playWorkSound() {
-        SoundEvent soundevent = this.getProfession().getWorksound();
-        if (soundevent != null) {
-            this.playSound(soundevent, this.getSoundVolume(), this.getSoundPitch());
-        }
-
-    }
-
-    protected void afterUsing(TradeOffer p_213713_1_) {
-        int i = 3 + this.random.nextInt(4);
-        this.villagerXp += p_213713_1_.getMerchantExperience();
-        this.lastTradedPlayer = this.getCustomer();
-        if (this.shouldIncreaseLevel()) {
-            this.updateMerchantTimer = 40;
-            this.increaseProfessionLevelOnUpdate = true;
-            i += 5;
-        }
-
-        if (p_213713_1_.shouldRewardPlayerExperience()) {
-            this.world.spawnEntity(new ExperienceOrbEntity(this.world, this.getX(), this.getY() + 0.5D, this.getZ(), i));
-        }
-
-    }
-
-    public void setAttacker(@Nullable LivingEntity p_70604_1_) {
-        if (p_70604_1_ != null && this.world instanceof ServerWorld) {
-            ((ServerWorld)this.world).handleInteraction(EntityInteraction.VILLAGER_HURT, p_70604_1_, this);
-            if (this.isAlive() && p_70604_1_ instanceof PlayerEntity) {
-                this.world.sendEntityStatus(this, (byte)13);
-            }
-        }
-
-        super.setAttacker(p_70604_1_);
-    }
-
-    public void onDeath(DamageSource p_70645_1_) {
-        LOGGER.info("Villager {} died, message: '{}'", this, p_70645_1_.getDeathMessage(this).getString());
-        Entity entity = p_70645_1_.getAttacker();
-        if (entity != null) {
-            this.tellWitnessesThatIWasMurdered(entity);
-        }
-
-        this.releaseAllPois();
-        super.onDeath(p_70645_1_);
-    }
-
-    private void releaseAllPois() {
-        this.releasePoi(MemoryModuleType.HOME);
-        this.releasePoi(MemoryModuleType.JOB_SITE);
-        this.releasePoi(MemoryModuleType.POTENTIAL_JOB_SITE);
-        this.releasePoi(MemoryModuleType.MEETING_POINT);
-    }
-
-    private void tellWitnessesThatIWasMurdered(Entity p_223361_1_) {
-        if (this.world instanceof ServerWorld) {
-            Optional<List<LivingEntity>> optional = this.brain.getOptionalRegisteredMemory(MemoryModuleType.VISIBLE_MOBS);
-            if (optional.isPresent()) {
-                ServerWorld serverworld = (ServerWorld)this.world;
-                optional.get().stream().filter((p_223349_0_) -> {
-                    return p_223349_0_ instanceof InteractionObserver;
-                }).forEach((p_223342_2_) -> {
-                    serverworld.handleInteraction(EntityInteraction.VILLAGER_KILLED, p_223361_1_, (InteractionObserver)p_223342_2_);
-                });
-            }
-        }
-    }
-
-    public void releasePoi(MemoryModuleType<GlobalPos> p_213742_1_) {
-        if (this.world instanceof ServerWorld) {
-            MinecraftServer minecraftserver = ((ServerWorld)this.world).getServer();
-            this.brain.getOptionalRegisteredMemory(p_213742_1_).ifPresent((p_213752_3_) -> {
-                ServerWorld serverworld = minecraftserver.getWorld(p_213752_3_.getDimension());
-                if (serverworld != null) {
-                    PointOfInterestStorage pointofinterestmanager = serverworld.getPointOfInterestStorage();
-                    Optional<PointOfInterestType> optional = pointofinterestmanager.getType(p_213752_3_.getPos());
-                    BiPredicate<DwarfEntity, PointOfInterestType> bipredicate = POI_MEMORIES.get(p_213742_1_);
-                    if (optional.isPresent() && bipredicate.test(this, optional.get())) {
-                        pointofinterestmanager.releaseTicket(p_213752_3_.getPos());
-                        DebugInfoSender.sendPointOfInterest(serverworld, p_213752_3_.getPos());
-                    }
-
-                }
-            });
-        }
-    }
-
-    public boolean isReadyToBreed() {
-        return this.foodLevel + this.countFoodPointsInInventory() >= 12 && this.getBreedingAge() == 0;
-    }
-
-
-    private boolean hungry() {
-        return this.foodLevel < 12;
-    }
-
-    private void eatUntilFull() {
-        if (this.hungry() && this.countFoodPointsInInventory() != 0) {
-            for(int i = 0; i < this.getInventory().size(); ++i) {
-                ItemStack itemstack = this.getInventory().getStack(i);
-                if (!itemstack.isEmpty()) {
-                    Integer integer = FOOD_POINTS.get(itemstack.getItem());
-                    if (integer != null) {
-                        int j = itemstack.getCount();
-
-                        for(int k = j; k > 0; --k) {
-                            this.foodLevel = (byte)(this.foodLevel + integer);
-                            this.getInventory().removeStack(i, 1);
-                            if (!this.hungry()) {
-                                return;
-                            }
-                        }
-                    }
-                }
-            }
-
-        }
-    }
-
-    public int getPlayerReputation(PlayerEntity p_223107_1_) {
-        return this.gossips.getReputationFor(p_223107_1_.getUuid(), (p_223103_0_) -> {
-            return true;
         });
     }
 
-    private void digestFood(int p_213758_1_) {
-        this.foodLevel = (byte)(this.foodLevel - p_213758_1_);
-    }
-
-    public void eatAndDigestFood() {
-        this.eatUntilFull();
-        this.digestFood(12);
-    }
-
-    public void setOffers(TradeOfferList p_213768_1_) {
-        this.offers = p_213768_1_;
-    }
-
-    private boolean shouldIncreaseLevel() {
-        int i = this.getProfessionLevel();
-        return VillagerData.canLevelUp(i) && this.villagerXp >= VillagerData.getUpperLevelExperience(i);
-    }
-
-    private void increaseMerchantCareer() {
-        this.setVillagerlevel(getProfessionLevel()+1);
-        this.fillRecipes();
-    }
-
-    protected Text getDefaultName() {
-        Identifier profName = this.getProfession().getRegistryName();
-        return new TranslatableTextContent(this.getType().getTranslationKey() + '.' + (!"minecraft".equals(profName.getNamespace()) ? profName.getNamespace() + '.' : "") + profName.getPath());
-    }
-
-
-    public void handleStatus(byte p_70103_1_) {
-        if (p_70103_1_ == 12) {
-            this.produceParticles(ParticleTypes.HEART);
-        } else if (p_70103_1_ == 13) {
-            this.produceParticles(ParticleTypes.ANGRY_VILLAGER);
-        } else if (p_70103_1_ == 14) {
-            this.produceParticles(ParticleTypes.HAPPY_VILLAGER);
-        } else if (p_70103_1_ == 42) {
-            this.produceParticles(ParticleTypes.SPLASH);
-        } else {
-            super.handleStatus(p_70103_1_);
-        }
-
-    }
-
-    @Nullable
-    public EntityData initialize(ServerWorldAccess p_213386_1_, LocalDifficulty p_213386_2_, SpawnReason p_213386_3_, @Nullable EntityData p_213386_4_, @Nullable NbtCompound p_213386_5_) {
-        if (p_213386_3_ == SpawnReason.BREEDING) {
-            this.setVillagerProfession(DwarfProfession.Warrior);
-        }
-
-        if (p_213386_3_ == SpawnReason.COMMAND || p_213386_3_ == SpawnReason.SPAWN_EGG || p_213386_3_ == SpawnReason.SPAWNER || p_213386_3_ == SpawnReason.DISPENSER) {
-            this.setVillagerDataBase();
-        }
-
-        if (p_213386_3_ == SpawnReason.STRUCTURE) {
-            this.assignProfessionWhenSpawned = true;
-        }
-
-        return super.initialize(p_213386_1_, p_213386_2_, p_213386_3_, p_213386_4_, p_213386_5_);
-    }
-
-
-
-
-    protected void loot(ItemEntity p_175445_1_) {
-        ItemStack itemstack = p_175445_1_.getStack();
-        if (this.canGather(itemstack)) {
-            SimpleInventory inventory = this.getInventory();
-            boolean flag = inventory.canInsert(itemstack);
-            if (!flag) {
-                return;
-            }
-
-            this.triggerItemPickedUpByEntityCriteria(p_175445_1_);
-            this.sendPickup(p_175445_1_, itemstack.getCount());
-            ItemStack itemstack1 = inventory.addStack(itemstack);
-            if (itemstack1.isEmpty()) {
-                p_175445_1_.discard();
-            } else {
-                itemstack.setCount(itemstack1.getCount());
-            }
-        }
-
-    }
-
-    public boolean canGather(ItemStack p_230293_1_) {
-        Item item = p_230293_1_.getItem();
-        return (WANTED_ITEMS.contains(item) || this.getProfession().getSpecificItems().contains(item)) && this.getInventory().canInsert(p_230293_1_);
-    }
-
-    public boolean hasExcessFood() {
-        return this.countFoodPointsInInventory() >= 24;
-    }
-
-    public boolean wantsMoreFood() {
-        return this.countFoodPointsInInventory() < 12;
-    }
-
-    private int countFoodPointsInInventory() {
-        SimpleInventory inventory = this.getInventory();
-        return FOOD_POINTS.entrySet().stream().mapToInt((p_226553_1_) -> {
-            return inventory.count(p_226553_1_.getKey()) * p_226553_1_.getValue();
-        }).sum();
-    }
-
-    public boolean hasFarmSeeds() {
-        return this.getInventory().containsAny(ImmutableSet.of(Items.WHEAT_SEEDS, Items.POTATO, Items.CARROT, Items.BEETROOT_SEEDS));
-    }
-
+    @Override
     protected void fillRecipes() {
-        DwarfProfession prof = getProfession();
-        Int2ObjectMap<TradeOffers.Factory[]> int2objectmap = DwarfTrades.TRADES.get(prof);
-        if (int2objectmap != null && !int2objectmap.isEmpty()) {
-            TradeOffers.Factory[] avillagertrades$itrade = int2objectmap.get(this.getProfessionLevel());
-            if (avillagertrades$itrade != null) {
-                TradeOfferList merchantoffers = this.getOffers();
-                this.fillRecipesFromPool(merchantoffers, avillagertrades$itrade, 2);
-            }
+        Int2ObjectMap<TradeOffers.Factory[]> int2ObjectMap2 = DwarfTrades.TRADES.get(this.getProfession());
+        if (int2ObjectMap2 == null || int2ObjectMap2.isEmpty()) {
+            return;
         }
+        TradeOffers.Factory[] factorys = int2ObjectMap2.get(this.getProfessionLevel());
+        if (factorys == null) {
+            return;
+        }
+        TradeOfferList tradeOfferList = this.getOffers();
+        this.fillRecipesFromPool(tradeOfferList, factorys, 2);
     }
 
-    protected void fillRecipesFromPool(TradeOfferList p_213717_1_, TradeOffers.Factory[] p_213717_2_, int p_213717_3_) {
-        Set<Integer> set = Sets.newHashSet();
-        if (p_213717_2_.length > p_213717_3_) {
-            while(set.size() < p_213717_3_) {
-                set.add(this.random.nextInt(p_213717_2_.length));
-            }
-        } else {
-            for(int i = 0; i < p_213717_2_.length; ++i) {
-                set.add(i);
-            }
-        }
-
-        for(Integer integer : set) {
-            TradeOffers.Factory villagertrades$itrade = p_213717_2_[integer];
-            TradeOffer merchantoffer = villagertrades$itrade.create(this, this.random);
-            if (merchantoffer != null) {
-                p_213717_1_.add(merchantoffer);
-            }
-        }
-
-    }
-
-    public void gossip(ServerWorld p_242368_1_, DwarfEntity p_242368_2_, long p_242368_3_) {
-        if ((p_242368_3_ < this.lastGossipTime || p_242368_3_ >= this.lastGossipTime + 1200L) && (p_242368_3_ < p_242368_2_.lastGossipTime || p_242368_3_ >= p_242368_2_.lastGossipTime + 1200L)) {
-            this.gossips.shareGossipFrom(p_242368_2_.gossips, this.random, 10);
-            this.lastGossipTime = p_242368_3_;
-            p_242368_2_.lastGossipTime = p_242368_3_;
-            this.spawnGolemIfNeeded(p_242368_1_, p_242368_3_, 5);
-        }
-    }
-
-    private void maybeDecayGossip() {
-        long i = this.world.getTime();
-        if (this.lastGossipDecayTime == 0L) {
-            this.lastGossipDecayTime = i;
-        } else if (i >= this.lastGossipDecayTime + 24000L) {
-            this.gossips.decay();
-            this.lastGossipDecayTime = i;
-        }
-    }
-
-
-
+    @Override
     @Nullable
-    private BlockPos findSpawnPositionForGolemInColumn(BlockPos p_241433_1_, double p_241433_2_, double p_241433_4_) {
-        BlockPos blockpos = p_241433_1_.offset(p_241433_2_, 6.0D, p_241433_4_);
-        BlockState blockstate = this.world.getBlockState(blockpos);
-
-        for(int j = 6; j >= -6; --j) {
-            BlockPos blockpos1 = blockpos;
-            BlockState blockstate1 = blockstate;
-            blockpos = blockpos.down();
-            blockstate = this.world.getBlockState(blockpos);
-            if ((blockstate1.isAir() || blockstate1.getMaterial().isLiquid()) && blockstate.getMaterial().isSolidBlocking()) {
-                return blockpos1;
+    public <T extends MobEntity> T convertTo(EntityType<T> entityType, boolean keepEquipment) {
+        if (this.isRemoved()|| entityType.equals(EntityType.ZOMBIE_VILLAGER)) {
+            return null;
+        }
+        MobEntity mobEntity = (MobEntity)entityType.create(this.getWorld());
+        if (mobEntity == null) {
+            return null;
+        }
+        mobEntity.copyPositionAndRotation(this);
+        mobEntity.setBaby(this.isBaby());
+        mobEntity.setAiDisabled(this.isAiDisabled());
+        if (this.hasCustomName()) {
+            mobEntity.setCustomName(this.getCustomName());
+            mobEntity.setCustomNameVisible(this.isCustomNameVisible());
+        }
+        if (this.isPersistent()) {
+            mobEntity.setPersistent();
+        }
+        mobEntity.setInvulnerable(this.isInvulnerable());
+        if (keepEquipment) {
+            mobEntity.setCanPickUpLoot(this.canPickUpLoot());
+            for (EquipmentSlot equipmentSlot : EquipmentSlot.values()) {
+                ItemStack itemStack = this.getEquippedStack(equipmentSlot);
+                if (itemStack.isEmpty()) continue;
+                mobEntity.equipStack(equipmentSlot, itemStack.copyAndEmpty());
+                mobEntity.setEquipmentDropChance(equipmentSlot, this.getDropChance(equipmentSlot));
             }
         }
-
-        return null;
-    }
-
-    public void onInteractionWith(EntityInteraction p_213739_1_, Entity p_213739_2_) {
-        if (p_213739_1_ == EntityInteraction.ZOMBIE_VILLAGER_CURED) {
-            this.gossips.startGossip(p_213739_2_.getUuid(), VillageGossipType.MAJOR_POSITIVE, 20);
-            this.gossips.startGossip(p_213739_2_.getUuid(), VillageGossipType.MINOR_POSITIVE, 25);
-        } else if (p_213739_1_ == EntityInteraction.TRADE) {
-            this.gossips.startGossip(p_213739_2_.getUuid(), VillageGossipType.TRADING, 2);
-        } else if (p_213739_1_ == EntityInteraction.VILLAGER_HURT) {
-            this.gossips.startGossip(p_213739_2_.getUuid(), VillageGossipType.MINOR_NEGATIVE, 25);
-        } else if (p_213739_1_ == EntityInteraction.VILLAGER_KILLED) {
-            this.gossips.startGossip(p_213739_2_.getUuid(), VillageGossipType.MAJOR_NEGATIVE, 25);
+        this.getWorld().spawnEntity(mobEntity);
+        if (this.hasVehicle()) {
+            Entity entity = this.getVehicle();
+            this.stopRiding();
+            mobEntity.startRiding(entity, true);
         }
-
+        this.discard();
+        return (T)mobEntity;
     }
 
-    public int getExperience() {
-        return this.villagerXp;
+    @Override
+    protected void resetCustomer() {
+        if (this.getProfession() == DwarfProfessionRecord.Warrior && this.hasCustomer()) {
+            super.resetCustomer();
+        }
     }
 
-    public void setVillagerXp(int p_213761_1_) {
-        this.villagerXp = p_213761_1_;
+    private void sayNo() {
+        this.setHeadRollingTimeLeft(40);
+        if (!this.getWorld().isClient()) {
+            this.playSound(SoundEvents.ENTITY_VILLAGER_NO);
+        }
     }
 
-    private void resetNumberOfRestocks() {
-        this.catchUpDemand();
-        this.numberOfRestocksToday = 0;
+    public ActionResult interactMob(PlayerEntity player, Hand hand) {
+        ItemStack itemStack = player.getStackInHand(hand);
+        if (!itemStack.isOf(Items.VILLAGER_SPAWN_EGG) && this.isAlive() && !this.hasCustomer() && !this.isSleeping()) {
+            if (this.isBaby()) {
+                this.sayNo();
+                return ActionResult.success(this.getWorld().isClient);
+            }
+            if (!this.getWorld().isClient) {
+                boolean bl = this.getOffers().isEmpty();
+                if (hand == Hand.MAIN_HAND) {
+                    if (bl) {
+                        this.sayNo();
+                    }
+                    player.incrementStat(Stats.TALKED_TO_VILLAGER);
+                }
+                if (bl) {
+                    return ActionResult.CONSUME;
+                }
+                this.beginTradeWith(player);
+            }
+            return ActionResult.success(this.getWorld().isClient);
+        }
+        return super.interactMob(player, hand);
     }
 
-    public VillagerGossips getGossips() {
-        return this.gossips;
-    }
-
-    public void setGossips(NbtElement p_223716_1_) {
-        this.gossips.deserialize(new Dynamic<>(NbtOps.INSTANCE, p_223716_1_));
-    }
-
-    protected void sendAiDebugData() {
-        super.sendAiDebugData();
-        DebugInfoSender.sendBrainDebugData(this);
-    }
-
-    public void sleep(BlockPos p_213342_1_) {
-        super.sleep(p_213342_1_);
-        this.brain.remember(MemoryModuleType.LAST_SLEPT, this.world.getTime());
-        this.brain.forget(MemoryModuleType.WALK_TARGET);
-        this.brain.forget(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE);
-    }
-
-    public void wakeUp() {
-        super.wakeUp();
-        this.brain.remember(MemoryModuleType.LAST_WOKEN, this.world.getTime());
+    private void beginTradeWith(PlayerEntity customer) {
+        this.prepareOffersFor(customer);
+        this.setCustomer(customer);
+        this.sendOffers(customer, this.getDisplayName(), this.getProfessionLevel());
     }
 
 
-    public static boolean canDwarfBreed(Object o) {
-        if(o instanceof DwarfEntity){
-            DwarfEntity entity = (DwarfEntity) o;
-            return entity.foodLevel + entity.countFoodPointsInInventory() >= 12 && entity.getBreedingAge() == 0;
+
+    private void prepareOffersFor(PlayerEntity player) {
+        int i = this.getReputation(player);
+        if (i != 0) {
+            for (TradeOffer tradeOffer : this.getOffers()) {
+                tradeOffer.increaseSpecialPrice(-MathHelper.floor((float)i * tradeOffer.getPriceMultiplier()));
+            }
+        }
+        if (player.hasStatusEffect(StatusEffects.HERO_OF_THE_VILLAGE)) {
+            StatusEffectInstance statusEffectInstance = player.getStatusEffect(StatusEffects.HERO_OF_THE_VILLAGE);
+            int j = statusEffectInstance.getAmplifier();
+            for (TradeOffer tradeOffer2 : this.getOffers()) {
+                double d = 0.3 + 0.0625 * (double)j;
+                int k = (int)Math.floor(d * (double)tradeOffer2.getOriginalFirstBuyItem().getCount());
+                tradeOffer2.increaseSpecialPrice(-Math.max(k, 1));
+            }
+        }
+    }
+
+    private void updateDemandBonus() {
+        for (TradeOffer tradeOffer : this.getOffers()) {
+            tradeOffer.updateDemandBonus();
+        }
+    }
+
+    public void restock() {
+        this.updateDemandBonus();
+        for (TradeOffer tradeOffer : this.getOffers()) {
+            tradeOffer.resetUses();
+        }
+        this.sendOffersToCustomer();
+        this.lastRestockTime = this.getWorld().getTime();
+        ++this.restocksToday;
+    }
+
+    public boolean shouldRestock() {
+        long l = this.lastRestockTime + 12000L;
+        long m = this.getWorld().getTime();
+        boolean bl = m > l;
+        long n = this.getWorld().getTimeOfDay();
+        if (this.lastRestockCheckTime > 0L) {
+            long p = n / 24000L;
+            long o = this.lastRestockCheckTime / 24000L;
+            bl |= p > o;
+        }
+        this.lastRestockCheckTime = n;
+        if (bl) {
+            this.lastRestockTime = m;
+            this.clearDailyRestockCount();
+        }
+        return this.canRestock() && this.needsRestock();
+    }
+
+    private boolean needsRestock() {
+        for (TradeOffer tradeOffer : this.getOffers()) {
+            if (!tradeOffer.hasBeenUsed()) continue;
+            return true;
         }
         return false;
     }
+
+    private boolean canRestock() {
+        return this.restocksToday == 0 || this.restocksToday < 2 && this.getWorld().getTime() > this.lastRestockTime + 2400L;
+    }
+
+    private void sendOffersToCustomer() {
+        TradeOfferList tradeOfferList = this.getOffers();
+        PlayerEntity playerEntity = this.getCustomer();
+        if (playerEntity != null && !tradeOfferList.isEmpty()) {
+            playerEntity.sendTradeOffers(playerEntity.currentScreenHandler.syncId, tradeOfferList, this.getProfessionLevel(), this.getExperience(), this.isLeveledMerchant(), this.canRefreshTrades());
+        }
+    }
+
+    public void playWorkSound() {
+        this.playSound(this.getProfession().workSound());
+    }
+
+    private void clearDailyRestockCount() {
+        this.restockAndUpdateDemandBonus();
+        this.restocksToday = 0;
+    }
+
+    private void restockAndUpdateDemandBonus() {
+        int i = 2 - this.restocksToday;
+        if (i > 0) {
+            for (TradeOffer tradeOffer : this.getOffers()) {
+                tradeOffer.resetUses();
+            }
+        }
+        for (int j = 0; j < i; ++j) {
+            this.updateDemandBonus();
+        }
+        this.sendOffersToCustomer();
+    }
+
+    private boolean canLevelUp() {
+        int i = this.getProfessionLevel();
+        return VillagerData.canLevelUp(i) && this.experience >= VillagerData.getUpperLevelExperience(i);
+    }
+
+    @Override
+    protected void afterUsing(TradeOffer offer) {
+        int i = 3 + this.random.nextInt(4);
+        this.experience += offer.getMerchantExperience();
+        this.lastCustomer = this.getCustomer();
+        if (this.canLevelUp()) {
+            this.levelUpTimer = 40;
+            this.levelingUp = true;
+            i += 5;
+        }
+        if (offer.shouldRewardPlayerExperience()) {
+            this.getWorld().spawnEntity(new ExperienceOrbEntity(this.getWorld(), this.getX(), this.getY() + 0.5, this.getZ(), i));
+        }
+    }
+
+    private void levelUp() {
+        this.setVillagerlevel(this.getProfessionLevel()+1);
+        this.fillRecipes();
+    }
+
+    @Override
+    protected void mobTick() {
+        if (!this.hasCustomer() && this.levelUpTimer > 0) {
+            --this.levelUpTimer;
+            if (this.levelUpTimer <= 0) {
+                if (this.levelingUp) {
+                    this.levelUp();
+                    this.levelingUp = false;
+                }
+                this.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, 200, 0));
+            }
+        }
+        if (this.lastCustomer != null && this.getWorld() instanceof ServerWorld) {
+            ((ServerWorld)this.getWorld()).handleInteraction(EntityInteraction.TRADE, this.lastCustomer, this);
+            this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_VILLAGER_HAPPY_PARTICLES);
+            this.lastCustomer = null;
+        }
+        super.mobTick();
+    }
+
+    @Override
+    protected Text getDefaultName() {
+        return Text.translatable(this.getType().getTranslationKey() + "." + WHRegistry.DWARF_PROFESSIONS.getId(this.getProfession()).getPath());
+    }
+
+    @Override
+    public boolean isReadyToBreed() {
+        return this.foodLevel + this.getAvailableFood() >= 12 && !this.isSleeping() && this.getBreedingAge() == 0;
+    }
+
+    private boolean lacksFood() {
+        return this.foodLevel < 12;
+    }
+
+    private void consumeAvailableFood() {
+        if (!this.lacksFood() || this.getAvailableFood() == 0) {
+            return;
+        }
+        for (int i = 0; i < this.getInventory().size(); ++i) {
+            int j;
+            Integer integer;
+            ItemStack itemStack = this.getInventory().getStack(i);
+            if (itemStack.isEmpty() || (integer = ITEM_FOOD_VALUES.get(itemStack.getItem())) == null) continue;
+            for (int k = j = itemStack.getCount(); k > 0; --k) {
+                this.foodLevel += integer.intValue();
+                this.getInventory().removeStack(i, 1);
+                if (this.lacksFood()) continue;
+                return;
+            }
+        }
+    }
+
+    public void eatForBreeding() {
+        this.consumeAvailableFood();
+        this.depleteFood(12);
+    }
+
+    private void depleteFood(int amount) {
+        this.foodLevel -= amount;
+    }
+
+    private int getAvailableFood() {
+        SimpleInventory simpleInventory = this.getInventory();
+        return ITEM_FOOD_VALUES.entrySet().stream().mapToInt(item -> simpleInventory.count(item.getKey()) * item.getValue()).sum();
+    }
+
+
+
 }

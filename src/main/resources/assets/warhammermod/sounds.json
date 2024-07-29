@@ -14,7 +14,7 @@
     "subtitle": "entity.skaven.ambient",
     "sounds": [ "warhammermod:hurt" ]
   },
-  "flamethrower": {
+  "entity.flamethrower.flame": {
     "category": "entity",
     "subtitle": "flame",
     "sounds": [ "warhammermod:flame" ]

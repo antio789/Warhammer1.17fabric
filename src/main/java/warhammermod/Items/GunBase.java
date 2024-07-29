@@ -1,14 +1,18 @@
 package warhammermod.Items;
 
-import net.fabricmc.fabric.api.object.builder.v1.client.model.FabricModelPredicateProviderRegistry;
+
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.RangedWeaponItem;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.particle.ParticleEffect;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Hand;
@@ -16,14 +20,24 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.UseAction;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.MixinEnvironment;
 import warhammermod.Items.melee.ShieldTemplate;
+import warhammermod.utils.ModEnchantmentHelper;
+import warhammermod.utils.Registry.WHRegistry;
 import warhammermod.utils.reference;
 
 import java.util.Random;
+import java.util.function.Predicate;
 
-public class GunBase extends Item implements IReloadItem {
+public abstract class GunBase extends RangedWeaponItem implements IReloadItem { //necesary to rework the shield component move to mixin
     public int timetoreload;
     public int Magsize;
+
+    public Item getAmmoType() {
+        return AmmoType;
+    }
+
     private final Item AmmoType;
     protected Random rand= new Random();
     public boolean hasshield=false; //use player.getitemoffhand instead
@@ -31,45 +45,10 @@ public class GunBase extends Item implements IReloadItem {
     public float height = 1.5F;
 
     public GunBase(Settings properties, Item ammotype, int time, int magsize) {
-        super(properties.tab(reference.warhammer));
+        super(properties.component(WHRegistry.AMMO,Ammocomponent.DEFAULT));
         Magsize=magsize;
         timetoreload=time;
         AmmoType=ammotype;
-
-        FabricModelPredicateProviderRegistry.register(this,new Identifier("reloading"),(stack, worldIn, entityIn, i) ->  {
-            NbtCompound ammocounter = stack.getNbt();
-            if (entityIn != null && stack.getItem() instanceof GunBase && entityIn instanceof PlayerEntity && !((PlayerEntity) entityIn).isCreative() && entityIn.isUsingItem() && entityIn.getActiveItem() == stack && (ammocounter == null || ammocounter.getInt("ammo") <= 0)) {
-                if (ammocounter!=null && !isCharged(stack) && (entityIn.getItemUseTime())>((GunBase) stack.getItem()).getTimetoreload()){
-                    return 0.0F;
-
-                }
-                else return 1.0F;
-            }
-            else return 0.0F;
-        });
-        FabricModelPredicateProviderRegistry.register(this,new Identifier("reloaded"),(stack, worldIn, entityIn, i) ->  {
-            NbtCompound ammocounter = stack.getNbt();
-            if (entityIn != null && stack.getItem() instanceof GunBase && entityIn instanceof PlayerEntity && !((PlayerEntity) entityIn).isCreative() && entityIn.isUsingItem() && entityIn.getActiveItem() == stack && (ammocounter == null || ammocounter.getInt("ammo") <= 0)) {
-                if (ammocounter!=null && !isCharged(stack) && (entityIn.getItemUseTime())>((GunBase) stack.getItem()).getTimetoreload()){
-                    return 1.0F;
-
-                }
-                else return 2.0F;
-            }
-            else return 0.0F;
-        });
-
-        FabricModelPredicateProviderRegistry.register(this,new Identifier("aimwithshield"),(stack, worldIn, entityIn,i) -> {
-            if (entityIn != null && stack.getItem() instanceof GunBase && entityIn instanceof PlayerEntity && !(((PlayerEntity) entityIn).isCreative()) && entityIn.isUsingItem() && entityIn.getActiveItem() == stack && isCharged(stack) && ((GunBase)stack.getItem()).hasshield((PlayerEntity) entityIn)){
-                return 1.0F;
-            }
-            else return 0.0F;
-
-        });
-    }
-
-    public boolean isReadytoFire(ItemStack stack){
-        return isCharged(stack);
     }
 
     public ItemStack findAmmo(PlayerEntity player) {
@@ -104,7 +83,7 @@ public class GunBase extends Item implements IReloadItem {
     @Override
     public void usageTick(World world, LivingEntity player, ItemStack stack, int count) {
         if (player instanceof PlayerEntity){
-            if ((count == getMaxUseTime(stack) - timetoreload) && !isCharged(stack) && !((PlayerEntity) player).isCreative() && !world.isClient()) {
+            if ((count == getMaxUseTime() - timetoreload) && !isCharged(stack) && !((PlayerEntity) player).isCreative() && !world.isClient()) {
                 world.playSound(null,player.getBlockPos(), SoundEvents.ITEM_FLINTANDSTEEL_USE,SoundCategory.PLAYERS,1,1);
             }
         }
@@ -112,67 +91,90 @@ public class GunBase extends Item implements IReloadItem {
 
 
     public void onStoppedUsing(ItemStack stack, World worldIn, LivingEntity entityLiving, int timeLeft) {
-        if (entityLiving instanceof PlayerEntity) {
-            PlayerEntity entityplayer = (PlayerEntity) entityLiving;
-            NbtCompound tag = stack.getOrCreateNbt();
-            if (isCharged(stack) || entityplayer.isCreative()) {
-                fire(entityplayer,worldIn,stack);
-                if(!entityplayer.isCreative())setCharge(stack,getCharge(stack,tag)-1,tag);
+        if (entityLiving instanceof PlayerEntity player) {
+            if (isCharged(stack) || player.isCreative()) {
+                fire(player,worldIn,stack);
+                if(!player.isCreative())setCharge(stack,getCharge(stack)-1);
             }
-            else if(timetoreload<=getMaxUseTime(stack)-timeLeft && !worldIn.isClient()) {
-                int ammoreserve = this.findAmmo(entityplayer).getCount();
-                int infinitylevel = EnchantmentHelper.getLevel(Enchantments.INFINITY, stack);
+            else if(timetoreload<=getMaxUseTime()-timeLeft && !worldIn.isClient()) {
+                int ammoreserve = this.findAmmo(player).getCount();
+                int infinitylevel = ModEnchantmentHelper.getLevel(worldIn, stack, Enchantments.INFINITY);
                 if (ammoreserve < Magsize) {
                     if (infinitylevel == 0) {
-                        this.findAmmo(entityplayer).decrement(ammoreserve);
+                        this.findAmmo(player).decrement(ammoreserve);
                     }
-                    setCharge(stack,ammoreserve,tag);
+                    setCharge(stack,ammoreserve);
                 } else {
                     if (infinitylevel == 0) {
-                        this.findAmmo(entityplayer).decrement(Magsize);
+                        this.findAmmo(player).decrement(Magsize);
                     }
-                    setCharge(stack,Magsize,tag);
+                    setCharge(stack,Magsize);
                 }
             }
         }
-
     }
-
+    public boolean isReadytoFire(ItemStack stack){
+        return isCharged(stack);
+    }
+/*
     public void inventoryTick(ItemStack p_77663_1_, World p_77663_2_, Entity entity, int p_77663_4_, boolean p_77663_5_) {
         if(entity instanceof PlayerEntity)  setshield((PlayerEntity) entity);
     }
-
+*/
     public void fire(PlayerEntity player, World world, ItemStack stack){}
 
-    public static boolean isCharged(ItemStack stack) {
-        NbtCompound compoundnbt = stack.getNbt();
-        return compoundnbt != null && compoundnbt.getInt("ammo")>0;
+    public boolean isCharged(ItemStack stack) {
+        Ammocomponent ammocomponent = stack.getOrDefault(WHRegistry.AMMO,Ammocomponent.DEFAULT);
+        return ammocomponent.ammocount() > 0;
     }
 
-    public static int getCharge(ItemStack stack, NbtCompound nbt) {
-        NbtCompound compoundnbt = stack.getNbt();
-        if(compoundnbt == null){return 0;}
-        return compoundnbt.getInt("ammo");
+    public static int getCharge(ItemStack stack) {
+        return stack.getOrDefault(WHRegistry.AMMO,Ammocomponent.DEFAULT).ammocount();
     }
 
-    public static void setCharge(ItemStack stack, int ammo, NbtCompound nbt) {
-        NbtCompound compoundnbt = stack.getOrCreateNbt();
-        compoundnbt.putInt("ammo", ammo);
+    public static void setCharge(ItemStack stack, int ammo) {
+        stack.set(WHRegistry.AMMO,new Ammocomponent(ammo));
     }
 
-    public int getMaxUseTime(ItemStack stack) { return 72000; }
+    @Override
+    public int getMaxUseTime(ItemStack stack, LivingEntity user) {
+        return 72000;
+    }
+    public int getMaxUseTime() { return 72000; }
 
     public UseAction getUseAction(ItemStack stack) {
-        return (isCharged(stack) && hasshield) ? UseAction.BLOCK:UseAction.BOW;
+        return UseAction.BOW;
     }
-
+/*
     public Boolean hasshield(PlayerEntity player){
         return player.getOffHandStack().getItem() instanceof ShieldTemplate;
     }
 
     private void setshield(PlayerEntity player){ hasshield = hasshield(player); }
-
+*/
     public int getTimetoreload(){ return timetoreload; }
 
     public int getEnchantability() { return 1; }
+    @Override
+    protected void shoot(LivingEntity shooter, ProjectileEntity projectile, int index, float speed, float divergence, float yaw, @Nullable LivingEntity target) {
+    }
+    @Override
+    public Predicate<ItemStack> getProjectiles() {
+        return null;
+    }
+    @Override
+    public int getRange() {
+        return 15;
+    }
+
+    public void playparticles(ParticleEffect effect,World world,PlayerEntity player){
+        if(world.isClient()) {
+            for (int k = 0; k < 30; ++k) {
+                double d2 = this.rand.nextGaussian() * 0.02D;
+                double d0 = this.rand.nextGaussian() * 0.02D;
+                double d1 = this.rand.nextGaussian() * 0.02D;
+                world.addParticle(effect, player.getX() + player.getRotationVector().x * 2 + (double) (this.rand.nextFloat() * this.width * 2) - (double) this.width, player.getY() + 0.4 + (double) (this.rand.nextFloat() * this.height), player.getZ() + player.getRotationVector().z * 2 + (double) (this.rand.nextFloat() * this.width * 2) - (double) this.width, d2, d0, d1);
+            }
+        }
+    }
 }

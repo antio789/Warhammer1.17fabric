@@ -14,6 +14,7 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import warhammermod.utils.Registry.Entityinit;
+import warhammermod.utils.Registry.ItemsInit;
 
 
 @EnvironmentInterfaces({@EnvironmentInterface(
@@ -29,15 +30,15 @@ public class StoneEntity extends ProjectileBase implements FlyingItemEntity{
         super(p_i50148_1_, p_i50148_2_);
     }
 
-    public StoneEntity(World worldin, LivingEntity shooter, float damageIn, EntityType<? extends ProjectileBase> type) {
-        super(worldin, shooter,damageIn, type);
+    public StoneEntity(World worldin, LivingEntity shooter, float damageIn, EntityType<? extends ProjectileBase> type,ItemStack stack,ItemStack ammo) {
+        super(type,worldin, shooter,stack,damageIn,ammo);
     }
-    public StoneEntity(World world, EntityType<? extends ProjectileBase> entity, double x, double y, double z) {
-        super( world,entity, x, y, z);
+    public StoneEntity(LivingEntity shooter, World world, float damage,ItemStack stack) {
+        this(world, shooter, damage, Entityinit.STONEENTITY,stack,new ItemStack(Items.COBBLESTONE));
     }
 
-    public StoneEntity(LivingEntity shooter, World world, float damage) {
-        this(world, shooter, damage, Entityinit.STONEENTITY);
+    public StoneEntity(LivingEntity shooter, World world, float damage,ItemStack stack,ItemStack ammo) {
+        this(world, shooter, damage, Entityinit.STONEENTITY,stack,ammo);
     }
 
 
@@ -53,7 +54,7 @@ public class StoneEntity extends ProjectileBase implements FlyingItemEntity{
         this.totaldamage = sum;
     }
 
-    protected void onEntityHit(EntityHitResult p_213868_1_) {
+    protected void onEntityHit(EntityHitResult entityHitResult) {
         float f = (float)this.getVelocity().length();
         double damageSum = projectiledamage+extradamage;
         int i = MathHelper.ceil(MathHelper.clamp((double)f * damageSum, 0.0D, 2.147483647E9D));
@@ -62,8 +63,13 @@ public class StoneEntity extends ProjectileBase implements FlyingItemEntity{
             i = (int)Math.min(j + (long)i, 2147483647L);
         }
         setTotaldamage(i);
-        super.onEntityHit(p_213868_1_);
+        super.onEntityHit(entityHitResult);
 
+    }
+
+    @Override
+    protected ItemStack getDefaultItemStack() {
+        return new ItemStack(Items.COBBLESTONE);
     }
 
     @Override

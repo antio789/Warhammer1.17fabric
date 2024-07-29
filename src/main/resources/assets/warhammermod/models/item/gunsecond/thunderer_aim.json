@@ -1,7 +1,7 @@
 {
   "parent": "item/handheld",
   "textures": {
-    "layer0": "warhammermod:items/thunderer_handgun"
+    "layer0": "warhammermod:item/thunderer_handgun"
   },
   "display": {
     "thirdperson_righthand": {

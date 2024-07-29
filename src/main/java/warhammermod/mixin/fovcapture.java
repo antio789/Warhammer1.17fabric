@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import warhammermod.Items.GunBase;
-import warhammermod.Items.ItemsInit;
+import warhammermod.utils.Registry.ItemsInit;
 @Environment(EnvType.CLIENT)
 @Mixin(AbstractClientPlayerEntity.class)
 public class fovcapture {

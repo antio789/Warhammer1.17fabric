@@ -2,26 +2,27 @@ package warhammermod.Entities.Projectile;
 
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 import warhammermod.utils.Registry.Entityinit;
+import warhammermod.utils.Registry.ItemsInit;
 
 
 public class HalberdEntity extends ProjectileBase{
     int fuse=20;
+
     public HalberdEntity(EntityType<? extends HalberdEntity> entityType, World p_i50148_2_) {
         super(entityType, p_i50148_2_);
     }
-    public HalberdEntity(World worldin, LivingEntity shooter, float damageIn, EntityType<? extends ProjectileBase> type) {
-        super(worldin, shooter,damageIn, type);
+    public HalberdEntity(World worldin, LivingEntity shooter, float damageIn, EntityType<? extends ProjectileBase> type,ItemStack stack) {
+        super(type,worldin, shooter,new ItemStack(ItemsInit.iron_halberd),damageIn ,stack);
     }
-    public HalberdEntity(World world, EntityType<? extends ProjectileBase> entity, double x, double y, double z) {
-        super( world,entity, x, y, z);
+
+    public HalberdEntity(LivingEntity shooter, World world, float damage, ItemStack stack) {
+        this(world, shooter, damage, Entityinit.halberdthrust, stack);
     }
-    public HalberdEntity(LivingEntity shooter, World world, float damage) {
-        this(world, shooter, damage, Entityinit.halberdthrust);
-    }
-    public HalberdEntity(World world, LivingEntity owner) {
-        super(Entityinit.halberdthrust, world, owner);
+    public HalberdEntity(World world) {
+        super(Entityinit.halberdthrust, world);
     }
 
 
@@ -36,5 +37,10 @@ public class HalberdEntity extends ProjectileBase{
         if(fuse==18){
             this.remove(RemovalReason.DISCARDED);
         }
+    }
+
+    @Override
+    protected ItemStack getDefaultItemStack() {
+        return new ItemStack(ItemsInit.iron_halberd);
     }
 }

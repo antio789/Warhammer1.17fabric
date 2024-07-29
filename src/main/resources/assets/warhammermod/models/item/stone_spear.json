@@ -1,7 +1,7 @@
 {
   "parent": "item/handheld",
   "textures": {
-    "layer0": "warhammermod:items/stone_spear"
+    "layer0": "warhammermod:item/stone_spear"
   },
   "display": {
     "thirdperson_righthand": {

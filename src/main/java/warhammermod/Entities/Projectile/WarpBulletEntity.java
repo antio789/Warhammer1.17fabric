@@ -6,9 +6,12 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.world.World;
 import warhammermod.utils.Registry.Entityinit;
+import warhammermod.utils.Registry.ItemsInit;
 
 public class WarpBulletEntity extends ProjectileBase {
 
@@ -18,11 +21,15 @@ public class WarpBulletEntity extends ProjectileBase {
     public WarpBulletEntity(EntityType<? extends WarpBulletEntity> p_i50148_1_, World p_i50148_2_) {
         super(p_i50148_1_, p_i50148_2_);
     }
-    public WarpBulletEntity(World worldin, LivingEntity shooter, float damageIn, EntityType<? extends ProjectileBase> type) {
-        super(worldin, shooter,damageIn, type);
+    public WarpBulletEntity(World worldin, LivingEntity shooter, float damageIn, EntityType<? extends ProjectileBase> type,ItemStack stack,ItemStack ammo) {
+        super(type,worldin, shooter,stack,damageIn,ammo);
     }
-    public WarpBulletEntity( LivingEntity shooter,World world, float damageIn) {
-        super(world, shooter, damageIn, Entityinit.WarpBullet);
+    public WarpBulletEntity( LivingEntity shooter,World world, float damageIn,ItemStack stack) {
+        this(world, shooter, damageIn, Entityinit.WarpBullet,stack,new ItemStack(ItemsInit.Warpstone));
+
+    }
+    public WarpBulletEntity( LivingEntity shooter,World world, float damageIn,ItemStack stack,ItemStack ammo) {
+        this(world, shooter, damageIn, Entityinit.WarpBullet,stack,ammo);
 
     }
 
@@ -35,10 +42,15 @@ public class WarpBulletEntity extends ProjectileBase {
     {
         super.tick();
 
-        if (this.world.isClient() && !this.inGround)
+        if (this.getWorld().isClient() && !this.inGround)
         {
             spawnColoredParticles();
         }
+    }
+
+    @Override
+    protected ItemStack getDefaultItemStack() {
+        return new ItemStack(ItemsInit.Warpstone);
     }
 
 
@@ -58,7 +70,7 @@ public class WarpBulletEntity extends ProjectileBase {
 
             for (int j = 0; j < 5; ++j)
             {
-                this.world.addParticle(ParticleTypes.ENTITY_EFFECT, this.getX() + (this.random.nextDouble() - 0.5D) * (double)this.getWidth(), this.getY() +this.random.nextDouble()*(double)this.getHeight(), this.getZ() + (this.random.nextDouble() - 0.5D) * (double)this.getWidth(), d0, d1, d2);
+                this.getWorld().addParticle(ParticleTypes.EFFECT, this.getX() + (this.random.nextDouble() - 0.5D) * (double)this.getWidth(), this.getY() +this.random.nextDouble()*(double)this.getHeight(), this.getZ() + (this.random.nextDouble() - 0.5D) * (double)this.getWidth(), d0, d1, d2);
             }
     }
 

@@ -1,7 +1,7 @@
 {
   "parent": "item/handheld",
   "textures": {
-    "layer0": "warhammermod:items/flintlock_pistol"
+    "layer0": "warhammermod:item/flintlock_pistol"
   },
   "display": {
     "thirdperson_righthand": {

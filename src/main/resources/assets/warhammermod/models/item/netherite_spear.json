@@ -1,7 +1,7 @@
 {
   "parent": "item/handheld",
   "textures": {
-    "layer0": "warhammermod:items/netherite_spear"
+    "layer0": "warhammermod:item/netherite_spear"
   },
   "display": {
     "thirdperson_righthand": {

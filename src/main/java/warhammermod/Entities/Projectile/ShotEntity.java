@@ -3,10 +3,12 @@ package warhammermod.Entities.Projectile;
 
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import warhammermod.utils.Registry.Entityinit;
+import warhammermod.utils.Registry.ItemsInit;
 
 public class ShotEntity extends ProjectileBase {
     public BlockPos Playerpos;
@@ -19,26 +21,29 @@ public class ShotEntity extends ProjectileBase {
         super(p_i50148_1_, p_i50148_2_);
     }
 
-    public ShotEntity(World worldin, LivingEntity shooter, float damageIn, EntityType<? extends ProjectileBase> type) {
-        super(worldin, shooter, damageIn, type);
+    public ShotEntity(World worldin, LivingEntity shooter, float damageIn, EntityType<? extends ProjectileBase> type,ItemStack stack,ItemStack ammo) {
+        super(type,worldin, shooter,stack,damageIn,ammo);
     }
 
-    public ShotEntity(World world, EntityType<? extends ProjectileBase> entity, double x, double y, double z) {
-        super(world, entity, x, y, z);
-    }
 
-    public ShotEntity(LivingEntity shooter, World world, float damage, BlockPos blockPos) {
-        this(world, shooter, damage, Entityinit.Shotentity);
+
+    public ShotEntity(LivingEntity shooter, World world, float damage, BlockPos blockPos,ItemStack stack,ItemStack ammo) {
+        this(world, shooter, damage, Entityinit.Shotentity,stack,ammo);
         Playerpos = blockPos;
     }
 
 
 
-    protected void onEntityHit(EntityHitResult entityhit) {
+    protected void onEntityHit(EntityHitResult entityHitResult) {
         if(modifydamage(timer)) {
-            super.onEntityHit(entityhit);
+            super.onEntityHit(entityHitResult);
         }else this.remove(RemovalReason.DISCARDED);
 
+    }
+
+    @Override
+    protected ItemStack getDefaultItemStack() {
+        return new ItemStack(ItemsInit.Shotshell);
     }
 
     public void tick()

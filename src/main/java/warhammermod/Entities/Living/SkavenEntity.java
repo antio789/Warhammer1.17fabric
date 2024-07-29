@@ -2,7 +2,7 @@ package warhammermod.Entities.Living;
 
 
 import net.minecraft.block.BlockState;
-import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.component.type.PotionContentsComponent;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.RangedAttackMob;
@@ -14,6 +14,7 @@ import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.mob.HostileEntity;
+import net.minecraft.entity.mob.SlimeEntity;
 import net.minecraft.entity.passive.CatEntity;
 import net.minecraft.entity.passive.IronGolemEntity;
 import net.minecraft.entity.passive.MerchantEntity;
@@ -26,12 +27,17 @@ import net.minecraft.item.ShieldItem;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.Potions;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.registry.tag.BiomeTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.random.ChunkRandom;
+import net.minecraft.util.math.random.Random;
 import net.minecraft.world.*;
 import net.minecraft.world.biome.BiomeKeys;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +45,8 @@ import warhammermod.Entities.Living.AImanager.RangedSkavenAttackGoal;
 import warhammermod.Entities.Projectile.StoneEntity;
 import warhammermod.Entities.Projectile.WarpBulletEntity;
 import warhammermod.Items.IReloadItem;
-import warhammermod.Items.ItemsInit;
+import warhammermod.utils.ModEnchantmentHelper;
+import warhammermod.utils.Registry.ItemsInit;
 import warhammermod.Items.ranged.RatlingGun;
 import warhammermod.Items.ranged.SlingTemplate;
 import warhammermod.Items.ranged.WarpgunTemplate;
@@ -47,14 +54,15 @@ import warhammermod.utils.Registry.Entityinit;
 import warhammermod.utils.Registry.WHRegistry;
 import warhammermod.utils.functions;
 
-import java.util.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import static net.minecraft.component.type.AttributeModifierSlot.ARMOR;
 import static warhammermod.utils.reference.*;
 
 
 public class SkavenEntity extends HostileEntity implements RangedAttackMob {
-
-    //useless but to remove annoying error message
 
     /**
      * Goals
@@ -74,14 +82,14 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
     };
 
     public void reassessWeaponGoal() {
-        if (this.world != null && !this.world.isClient) {
+        if (this.getWorld() != null && !this.getWorld().isClient) {
             this.goalSelector.remove(this.meleeGoal);
             this.goalSelector.remove(this.bowGoal);
             this.goalSelector.remove(this.aiRangedPotion);
             ItemStack item = this.getMainHandStack();
             int i = firerate.get(getSkavenTypePosition());
             if (item.getItem() instanceof WarpgunTemplate || item.getItem() instanceof RatlingGun || item.getItem() instanceof SlingTemplate) {
-                if (this.world.getDifficulty() != Difficulty.HARD) {
+                if (this.getWorld().getDifficulty() != Difficulty.HARD) {
                     i *= 1.5;
                 }
 
@@ -150,8 +158,8 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
         int typepos = Math.max(Types.indexOf(getSkaventype()),0);
         return SkavenSize.get(typepos);
     }
-    public EntityDimensions getDimensions(EntityPose pose) {
-        return super.getDimensions(pose).scaled(getSkavenSize());
+    public float getScaleFactor() {
+        return this.isBaby() ? 0.5f : getSkavenSize();
     }
 
     private void updateSkavenSize(){
@@ -182,9 +190,8 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
     /**
      * initializing
      */
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(SkavenType, Types.get(0));
+    protected void initData() {
+        this.getDataTracker().set(SkavenType, Types.get(0));
     }
 
 
@@ -194,13 +201,14 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
         super(p_i48555_1_, p_i48555_2_);
         this.reassessWeaponGoal();
         fixgame=true;
+        this.initData();
     }
     @Nullable
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficultyIn, SpawnReason reason, @Nullable EntityData spawnDataIn, @Nullable NbtCompound dataTag) {
-        spawnDataIn = super.initialize(world, difficultyIn, reason, spawnDataIn, dataTag);
+    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficultyIn, SpawnReason reason, @Nullable EntityData spawnDataIn) {
+        spawnDataIn = super.initialize(world, difficultyIn, reason, spawnDataIn);
         setSkavenType(getrandomtype());
         this.initEquipment(difficultyIn);
-        this.updateEnchantments(difficultyIn);
+        this.updateEnchantments(world,random,difficultyIn);
         this.reassessWeaponGoal();
         this.handleAttributes();
         return spawnDataIn;
@@ -262,46 +270,47 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
         return !getSkaventype().equals(globadier);
     }
 
-    public void attack(LivingEntity target, float p_82196_2_) {
-        Item item = this.getMainHandStack().getItem();
+    public void attack(LivingEntity target, float pullprogress) {
+        ItemStack stack = this.getMainHandStack();
+        Item item = stack.getItem();
         if(item instanceof WarpgunTemplate){
-            attackEntitywithrifle(target,7,11);
+            attackEntitywithrifle(target,7,11,stack);
         }
         else if(item instanceof RatlingGun){
-            attackEntitywithrifle(target,5,26);
+            attackEntitywithrifle(target,5,26,stack);
         }
         else if(item instanceof SlingTemplate){
-            attackEntitywithstone(target,15);
+            attackEntitywithstone(target,15,stack);
         }
         else if(getSkaventype().equals(globadier)){
             attackpotions(target);
         }
     }
     private void attackpotions(LivingEntity target){
-
-
         Vec3d vec3d = target.getVelocity();
         double d0 = target.getX() + vec3d.x - this.getX();
         double d1 = target.getEyeY() - (double)1.1F - this.getY();
         double d2 = target.getZ() + vec3d.z - this.getZ();
         double f = Math.sqrt(d0 * d0 + d2 * d2);
-        Potion potion = random.nextBoolean() ? Potions.HARMING : Potions.POISON;
+        RegistryEntry<Potion> registryEntry = random.nextBoolean() ? Potions.HARMING : Potions.POISON;
 
-        PotionEntity potionentity = new PotionEntity(this.world, this);
-        potionentity.setItem(PotionUtil.setPotion(new ItemStack(Items.LINGERING_POTION), potion));
+        PotionEntity potionentity = new PotionEntity(this.getWorld(), this);
+        potionentity.setItem(PotionContentsComponent.createStack(Items.LINGERING_POTION, registryEntry));
         potionentity.setPitch(potionentity.getPitch() - -20.0F);
         potionentity.setVelocity(d0, d1 + (double)(f * 0.2F), d2, 0.75F, 8.0F);
-        this.world.playSound((PlayerEntity) null, this.getX(), this.getY(), this.getZ(), SoundEvents.ENTITY_WITCH_THROW, this.getSoundCategory(), 1.0F, 0.8F + this.random.nextFloat() * 0.4F);
-        this.world.spawnEntity(potionentity);
+        if (!this.isSilent()) {
+            this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ENTITY_WITCH_THROW, this.getSoundCategory(), 1.0F, 0.8F + this.random.nextFloat() * 0.4F);
+        }
+        this.getWorld().spawnEntity(potionentity);
 
     }
-    private void attackEntitywithrifle(LivingEntity target, int damage, float inaccuracy){
-        WarpBulletEntity bullet = new WarpBulletEntity(this,world, damage);
-        int j = EnchantmentHelper.getEquipmentLevel(Enchantments.POWER,this);
+    private void attackEntitywithrifle(LivingEntity target, int damage, float inaccuracy,ItemStack stack){
+        WarpBulletEntity bullet = new WarpBulletEntity(this,this.getWorld(),damage,stack);
+        int j = ModEnchantmentHelper.getLevel(getWorld(),stack,Enchantments.POWER);
         if (j > 0) {
             bullet.setpowerDamage(j);
         }
-        int k = EnchantmentHelper.getEquipmentLevel(Enchantments.PUNCH, this) + 1;
+        int k = ModEnchantmentHelper.getLevel(getWorld(),stack,Enchantments.PUNCH) + 1;
         if (k > 0) {
             bullet.setknockbacklevel(k);
         }
@@ -309,44 +318,44 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
         double d1 = target.getBodyY(0.3333333333333333D) - bullet.getY();
         double d2 = target.getZ() - this.getZ();
         double d3 = (double) Math.sqrt(d0 * d0 + d2 * d2);
-        bullet.setVelocity(d0,d1+d3*0.06,d2,3,(float)(inaccuracy - this.world.getDifficulty().getId() * 4));//inac14
-        this.playSound( SoundEvents.ENTITY_GENERIC_EXPLODE, 1.0F, 2F / (random.nextFloat() * 0.4F + 1.2F) + 0.5F);
-        this.world.spawnEntity(bullet);
+        bullet.setVelocity(d0,d1+d3*0.06,d2,3,(float)(inaccuracy - this.getWorld().getDifficulty().getId() * 4));//inac14
+        this.playSound(SoundEvents.ENTITY_GENERIC_EXPLODE.value(), 1.0F, 2F / (random.nextFloat() * 0.4F + 1.2F) + 0.5F);
+        this.getWorld().spawnEntity(bullet);
 
     }
-    private void attackEntitywithstone(LivingEntity target, float inaccuracy){
-        StoneEntity stone = new StoneEntity(this,world,3);
+    private void attackEntitywithstone(LivingEntity target, float inaccuracy,ItemStack stack){
+        StoneEntity stone = new StoneEntity(this,getWorld(),3,stack);
 
-        int j = EnchantmentHelper.getEquipmentLevel(Enchantments.POWER, this);
+        int j = ModEnchantmentHelper.getLevel(getWorld(),stack,Enchantments.POWER);
         if (j > 0) {
             stone.setTotaldamage(stone.projectiledamage + (float)j * 0.5F + 0.5F);
         }
-        int k = EnchantmentHelper.getEquipmentLevel(Enchantments.PUNCH, this) + 1;
+        int k = ModEnchantmentHelper.getLevel(getWorld(),stack,Enchantments.PUNCH) + 1;
         if (k > 0) {
             stone.setknockbacklevel(k);
         }
 
 
-        if (EnchantmentHelper.getEquipmentLevel(Enchantments.FLAME, this) > 0) {
+        if (ModEnchantmentHelper.getLevel(getWorld(),stack,Enchantments.FLAME) > 0) {
             stone.setOnFireFor(100);
         }
         double d0 = target.getX()  - this.getX();
         double d1 = target.getBodyY(0.3333333333333333D) - stone.getY();
         double d2 = target.getZ() - this.getZ();
         double d3 = (double) Math.sqrt(d0 * d0 + d2 * d2);
-        stone.setVelocity(d0,d1+d3*0.2,d2,1.3F,(float)(inaccuracy - this.world.getDifficulty().getId() * 4));
+        stone.setVelocity(d0,d1+d3*0.2,d2,1.3F,(float)(inaccuracy - this.getWorld().getDifficulty().getId() * 4));
         this.playSound( SoundEvents.ENTITY_ARROW_SHOOT, 1.0F, 1.0F / (random.nextFloat() * 0.4F + 1.2F));
-        this.world.spawnEntity(stone);
+        this.getWorld().spawnEntity(stone);
 
     }
 
     public boolean damage(DamageSource source, float amount){
         if (!super.damage(source, amount)) {
             return false;
-        } else if (!(this.world instanceof ServerWorld)) {
+        } else if (!(this.getWorld() instanceof ServerWorld)) {
             return false;
         } else {
-            ServerWorld serverworld = (ServerWorld)this.world;
+            ServerWorld serverworld = (ServerWorld)this.getWorld();
             LivingEntity livingentity = this.getTarget();
             if (livingentity == null && source.getAttacker() instanceof LivingEntity) {
                 livingentity = (LivingEntity)source.getAttacker();
@@ -355,8 +364,8 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
 
 
 
-            if (livingentity != null && this.world.getDifficulty() == Difficulty.HARD && (double)this.random.nextFloat() < reinforcementchance.get(getSkavenTypePosition())/2 && this.world.getGameRules().getBoolean(GameRules.DO_MOB_SPAWNING)) {
-                SkavenEntity skavenEntity = Entityinit.SKAVEN.create(this.world);
+            if (livingentity != null && this.getWorld().getDifficulty() == Difficulty.HARD && (double)this.random.nextFloat() < reinforcementchance.get(getSkavenTypePosition())/2 && this.getWorld().getGameRules().getBoolean(GameRules.DO_MOB_SPAWNING)) {
+                SkavenEntity skavenEntity = Entityinit.SKAVEN.create(this.getWorld());
                 int i = MathHelper.floor(this.getX());
                 int j = MathHelper.floor(this.getY());
                 int k = MathHelper.floor(this.getZ());
@@ -366,18 +375,14 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
                     int j1 = j + MathHelper.nextInt(this.random, 7, 40) * MathHelper.nextInt(this.random, -1, 1);
                     int k1 = k + MathHelper.nextInt(this.random, 7, 40) * MathHelper.nextInt(this.random, -1, 1);
                     BlockPos blockpos = new BlockPos(i1, j1, k1);
-                    EntityType<?> entitytype = skavenEntity.getType();
-                    SpawnRestriction.Location placementType = SpawnRestriction.getLocation(entitytype);
-                    if (SpawnHelper.canSpawn(placementType, this.world, blockpos, entitytype) && SpawnRestriction.canSpawn(entitytype, serverworld, SpawnReason.REINFORCEMENT, blockpos, this.world.random)) {
-                        skavenEntity.setPosition((double)i1, (double)j1, (double)k1);
-                        if (!this.world.isPlayerInRange((double)i1, (double)j1, (double)k1, 7.0D) && this.world.doesNotIntersectEntities(skavenEntity) && this.world.isSpaceEmpty(skavenEntity) && !this.world.containsFluid(skavenEntity.getBoundingBox())) {
-
-                            skavenEntity.setTarget(livingentity);
-                            skavenEntity.initialize(serverworld, this.world.getLocalDifficulty(skavenEntity.getBlockPos()), SpawnReason.REINFORCEMENT, (EntityData)null, (NbtCompound)null);
-                            serverworld.spawnEntityAndPassengers(skavenEntity);
-                            break;
-                        }
-                    }
+                    EntityType<?> entityType = skavenEntity.getType();
+                    if (!SpawnRestriction.isSpawnPosAllowed(entityType, this.getWorld(), blockpos) || !SpawnRestriction.canSpawn(entityType, serverworld, SpawnReason.REINFORCEMENT, blockpos, this.getWorld().random)) continue;
+                    skavenEntity.setPosition(i1, j1, k1);
+                    if (this.getWorld().isPlayerInRange(i1, j1, k1, 7.0) || !this.getWorld().doesNotIntersectEntities(skavenEntity) || !this.getWorld().isSpaceEmpty(skavenEntity) || this.getWorld().containsFluid(skavenEntity.getBoundingBox())) continue;
+                    skavenEntity.setTarget(livingentity);
+                    skavenEntity.initialize(serverworld, this.getWorld().getLocalDifficulty(skavenEntity.getBlockPos()), SpawnReason.REINFORCEMENT, null);
+                    serverworld.spawnEntityAndPassengers(skavenEntity);
+                    break;
                 }
             }
 
@@ -427,12 +432,12 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
             }
         }
     }
-
+    /*
     protected void updateEnchantments(LocalDifficulty difficulty) {
         float f = difficulty.getClampedLocalDifficulty();
         if(this.random.nextFloat() > 0.5F) this.enchantMainHandItem(f);
     }
-
+*/
     public void writeCustomDataToNbt(NbtCompound compoundNBT) {
         super.writeCustomDataToNbt(compoundNBT);
         compoundNBT.putString("SkavenType", this.getSkaventype());
@@ -451,9 +456,17 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
         super.onTrackedDataSet(key);
     }
 
-    public static boolean checkSkavenSpawnRules(EntityType<SkavenEntity> entityType, ServerWorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        if (world.getDifficulty() != Difficulty.PEACEFUL && isSpawnDark(world, pos, random) && canMobSpawn(entityType, world, spawnReason, pos, random) && !spawnReason.equals(SpawnReason.REINFORCEMENT)) {
-            return Objects.equals(world.getBiomeName(pos), Optional.of(BiomeKeys.MOUNTAINS)) || pos.getY() < 60;
+    public static boolean canSpawn(EntityType<SkavenEntity> type, ServerWorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
+        if (SpawnReason.isAnySpawner(spawnReason)) {
+            return SkavenEntity.canMobSpawn(type, world, spawnReason, pos, random);
+        }
+        if (world.getDifficulty() != Difficulty.PEACEFUL) {
+            if (spawnReason == SpawnReason.SPAWNER) {
+                return SkavenEntity.canMobSpawn(type, world, spawnReason, pos, random);
+            }
+        if (world.getBiome(pos).isIn(BiomeTags.IS_MOUNTAIN )|| pos.getY()<60) {
+                return SkavenEntity.canMobSpawn(type, world, spawnReason, pos, random);
+            }
         }
         return false;
     }
@@ -465,7 +478,7 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
                 f = this.handDropChances[slot.getEntitySlotId()];
                 if (this.getMainHandStack().getItem() instanceof IReloadItem) f = 2;
             }
-            case ARMOR -> f = this.armorDropChances[slot.getIndex()];
+            case HUMANOID_ARMOR -> f = this.armorDropChances[slot.getEntitySlotId()];
             default -> f = 0.0F;
         }
 
@@ -479,5 +492,23 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
             return true;
         }
         else return false;
+    }
+
+    @Override
+    public void shootAt(LivingEntity target, float pullProgress) {
+        ItemStack stack = this.getMainHandStack();
+        Item item = stack.getItem();
+        if(item instanceof WarpgunTemplate){
+            attackEntitywithrifle(target,7,11,stack);
+        }
+        else if(item instanceof RatlingGun){
+            attackEntitywithrifle(target,5,26,stack);
+        }
+        else if(item instanceof SlingTemplate){
+            attackEntitywithstone(target,15,stack);
+        }
+        else if(getSkaventype().equals(globadier)){
+            attackpotions(target);
+        }
     }
 }

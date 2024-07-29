@@ -82,5 +82,6 @@
   "itemGroup.warhammermod.warhammer": "Warhammer",
   "item.ghal_maraz.succes":"You are blessed by the Gods",
   "item.ghal_maraz.fail":"The Gods are not with you today",
-  "item.ghal_maraz.break":"Ghal Maraz leaves you now but will come back in time of need"
+  "item.ghal_maraz.break":"Ghal Maraz leaves you now but will come back in time of need",
+  "tooltip.ghal_maraz":"The Legendary WarHammer, use wisely"
 }

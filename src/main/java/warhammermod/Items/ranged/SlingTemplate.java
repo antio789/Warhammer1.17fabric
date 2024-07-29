@@ -15,6 +15,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.world.World;
 import warhammermod.Entities.Projectile.StoneEntity;
+import warhammermod.utils.ModEnchantmentHelper;
 
 import java.util.Random;
 
@@ -29,7 +30,7 @@ public class SlingTemplate extends BowItem {
     }
 
     public void usageTick(World world, LivingEntity player, ItemStack stack, int count) {
-        charging = Math.min(1,(stack.getMaxUseTime()- count) / 20.0F);
+        charging = Math.min(1,(getMaxUseTime(stack, player)- count) / 20.0F);
     }
 
 
@@ -53,58 +54,55 @@ public class SlingTemplate extends BowItem {
     }
 
     public void onStoppedUsing(ItemStack stack, World world, LivingEntity entity, int timeleft) {
-        if (entity instanceof PlayerEntity) {
-            PlayerEntity playerentity = (PlayerEntity)entity;
-            boolean shoulduseammo = playerentity.getAbilities().creativeMode || EnchantmentHelper.getLevel(Enchantments.INFINITY, stack) > 0;
-            ItemStack itemstack = findAmmo(playerentity);
+        if (entity instanceof PlayerEntity player) {
+            boolean shoulduseammo = player.getAbilities().creativeMode || ModEnchantmentHelper.getLevel(world, stack, Enchantments.INFINITY) > 0;
+            ItemStack itemstack = findAmmo(player);
             if (!itemstack.isEmpty() || shoulduseammo) {
                 if (itemstack.isEmpty()) {
                     itemstack = new ItemStack(Items.COBBLESTONE);
                 }
 
 
-                int j = this.getMaxUseTime(stack) - timeleft;
+                int j = this.getMaxUseTime(stack, player) - timeleft;
                 float f = getPullProgress(j);
                 if (!((double)f < 0.1D)) {
 
                     if (!world.isClient) {
-
-                        StoneEntity stone = new StoneEntity(playerentity,world,2.5F);
-                        stone.setVelocity(playerentity, playerentity.getPitch(), playerentity.getYaw(), 0.0F, f * 2.75F, 1.0F);
+                        //check damage is coherent with bow, bow base is 2
+                        StoneEntity stone = new StoneEntity(player,world,1.5F,stack,findAmmo(player));
+                        stone.setPosition(player.getX(),player.getEyeY()-0.26,player.getZ());
+                        stone.setVelocity(player, player.getPitch(), player.getYaw(), 0.0F, f * 2.75F, 1.0F);
                         if (f == 1.0F) {
                             stone.setCritical(true);
                         }
 
-                        int p = EnchantmentHelper.getLevel(Enchantments.POWER, stack);
+                        int p = ModEnchantmentHelper.getLevel(world, stack,Enchantments.POWER);
                         if (p > 0) {
                             stone.setDamage(stone.getDamage() + (double)j * 0.5D + 0.5D);
                         }
 
-                        int k = EnchantmentHelper.getLevel(Enchantments.PUNCH, stack);
+                        int k = ModEnchantmentHelper.getLevel(world, stack,Enchantments.PUNCH);
                         if (k > 0) {
-                            stone.setPunch(k);
+                            stone.setknockbacklevel(k);
                         }
 
-                        if (EnchantmentHelper.getLevel(Enchantments.FLAME, stack) > 0) {
+                        if (ModEnchantmentHelper.getLevel(world, stack,Enchantments.FLAME) > 0) {
                             stone.setOnFireFor(100);
                         }
 
-                        stack.damage(1, playerentity, (p_220009_1_) -> {
-                            p_220009_1_.sendToolBreakStatus(playerentity.getActiveHand());
-                        });
-
+                        stack.damage(1, player, LivingEntity.getSlotForHand(player.getActiveHand()));
                         world.spawnEntity(stone);
                     }
                     Random random = new Random();
-                    world.playSound(null, playerentity.getX(), playerentity.getY(), playerentity.getZ(), SoundEvents.ENTITY_ARROW_SHOOT, SoundCategory.PLAYERS, 1.0F, 1.0F / (random.nextFloat() * 0.4F + 1.2F) + f * 0.5F);
+                    world.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.ENTITY_ARROW_SHOOT, SoundCategory.PLAYERS, 1.0F, 1.0F / (random.nextFloat() * 0.4F + 1.2F) + f * 0.5F);
                     if (!shoulduseammo) {
                         itemstack.decrement(1);
                         if (itemstack.isEmpty()) {
-                            playerentity.getInventory().removeOne(itemstack);
+                            player.getInventory().removeOne(itemstack);
                         }
                     }
 
-                    playerentity.incrementStat(Stats.USED.getOrCreateStat(this));
+                    player.incrementStat(Stats.USED.getOrCreateStat(this));
                 }
             }
         }

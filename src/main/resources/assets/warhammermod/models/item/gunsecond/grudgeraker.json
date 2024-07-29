@@ -1,7 +1,7 @@
 {
   "parent": "item/handheld",
   "textures": {
-    "layer0": "warhammermod:items/grudgeraker_reloading"
+    "layer0": "warhammermod:item/grudgeraker_reloading"
   },
   "display": {
     "thirdperson_righthand": {
