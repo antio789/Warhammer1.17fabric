@@ -22,7 +22,7 @@ public class moditemtagprovider extends FabricTagProvider.ItemTagProvider {
      * <p>Common implementations of this class are provided.
      *
      * @param output           the {@link FabricDataOutput} instance
-     * @param registryKey
+     *
      * @param registriesFuture the backing registry for the tag type
      */
     public moditemtagprovider(FabricDataOutput output, CompletableFuture<RegistryWrapper.WrapperLookup> registriesFuture) {
