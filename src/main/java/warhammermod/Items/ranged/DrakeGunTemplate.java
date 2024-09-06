@@ -1,15 +1,10 @@
 package warhammermod.Items.ranged;
 
 
-import net.minecraft.client.sound.Sound;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.projectile.SmallFireballEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 import warhammermod.Entities.Projectile.FlameEntity;
 import warhammermod.Items.AutogunBase;

@@ -30,12 +30,17 @@ public class PegasusEntity extends HorseEntity {
 
     public PegasusEntity(EntityType<? extends HorseEntity> p_i50238_1_, World p_i50238_2_) {
         super(p_i50238_1_, p_i50238_2_);
-        this.getDataTracker().set(MixBlood,false);
-        this.getDataTracker().set(Texture_parameter,0);
+    }
+
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(MixBlood, false);
+        builder.add(Texture_parameter,0);
     }
 
     /**
-     * all of this to have special colored pegasuses
+     * all of this to have special colored pegasuses, to rework
      */
     private static final TrackedData<Boolean> MixBlood = DataTracker.registerData(PegasusEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 

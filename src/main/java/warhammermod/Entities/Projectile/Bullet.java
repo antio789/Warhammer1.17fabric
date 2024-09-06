@@ -2,9 +2,7 @@ package warhammermod.Entities.Projectile;
 
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.world.World;
 import warhammermod.utils.Registry.Entityinit;

@@ -1,16 +1,11 @@
 package warhammermod.Items.melee;
 
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
 import net.minecraft.component.type.AttributeModifierSlot;
 import net.minecraft.component.type.AttributeModifiersComponent;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.item.SwordItem;
 import net.minecraft.item.ToolMaterial;
-import warhammermod.utils.reference;
 
 
 public class HammerTemplate extends SwordItem {

@@ -16,7 +16,12 @@ import net.minecraft.util.Identifier;
 import warhammermod.utils.reference;
 
 public class DwarfVillagePools {
-    public static final StructurePool START = StructurePools.register(new StructurePool(new Identifier("warhammermod:dwarf_village/town_centers"), new Identifier("empty"), ImmutableList.of(Pair.of(StructurePoolElement.ofProcessedLegacySingle(location("town_centers/dwarf_meeting_point_1").toString(), StructureProcessorLists.EMPTY), 1),Pair.of(StructurePoolElement.ofProcessedLegacySingle(location("town_centers/tavern").toString(), StructureProcessorLists.EMPTY), 3)), StructurePool.Projection.RIGID));
+    public static final StructurePool START = StructurePools.register(new StructurePool(
+            new Identifier("warhammermod:dwarf_village/town_centers"), new Identifier("empty"),
+            ImmutableList.of(
+                    Pair.of(StructurePoolElement.ofProcessedLegacySingle(location("town_centers/dwarf_meeting_point_1").toString(), StructureProcessorLists.EMPTY), 1),
+                    Pair.of(StructurePoolElement.ofProcessedLegacySingle(location("town_centers/tavern").toString(), StructureProcessorLists.EMPTY), 3)),
+            StructurePool.Projection.RIGID));
 
     public static void init() {
     }
@@ -29,7 +34,16 @@ public class DwarfVillagePools {
 
     static {
 
-         StructurePools.register(new StructurePool(new Identifier("warhammermod:dwarf_village/streets"), new Identifier("warhammermod:dwarf_village/terminators"), ImmutableList.of(Pair.of(StructurePoolElement.ofLegacySingle("warhammermod:dwarf_village/streets/corner_01"), 2),  Pair.of(StructurePoolElement.ofProcessedLegacySingle("warhammermod:dwarf_village/streets/corner_02", pathchange), 2),  Pair.of(StructurePoolElement.ofProcessedLegacySingle("warhammermod:dwarf_village/streets/corner_03", pathchange), 2),  Pair.of(StructurePoolElement.ofProcessedLegacySingle("warhammermod:dwarf_village/streets/straight_01", pathchange), 2), Pair.of(StructurePoolElement.ofProcessedLegacySingle("warhammermod:dwarf_village/streets/straight_02", pathchange), 2), Pair.of(StructurePoolElement.ofProcessedLegacySingle("warhammermod:dwarf_village/streets/crossroad_01", pathchange), 2), Pair.of(StructurePoolElement.ofProcessedLegacySingle("warhammermod:dwarf_village/streets/crossroad_02", pathchange), 1),Pair.of(StructurePoolElement.ofProcessedLegacySingle("warhammermod:dwarf_village/streets/turn_01",pathchange), 3)), StructurePool.Projection.TERRAIN_MATCHING));
+         StructurePools.register(new StructurePool(new Identifier("warhammermod:dwarf_village/streets"), new Identifier("warhammermod:dwarf_village/terminators"),
+                 ImmutableList.of(Pair.of(StructurePoolElement.ofLegacySingle("warhammermod:dwarf_village/streets/corner_01"), 2),
+                         Pair.of(StructurePoolElement.ofProcessedLegacySingle("warhammermod:dwarf_village/streets/corner_02", pathchange), 2),
+                         Pair.of(StructurePoolElement.ofProcessedLegacySingle("warhammermod:dwarf_village/streets/corner_03", pathchange), 2),
+                         Pair.of(StructurePoolElement.ofProcessedLegacySingle("warhammermod:dwarf_village/streets/straight_01", pathchange), 2),
+                         Pair.of(StructurePoolElement.ofProcessedLegacySingle("warhammermod:dwarf_village/streets/straight_02", pathchange), 2),
+                         Pair.of(StructurePoolElement.ofProcessedLegacySingle("warhammermod:dwarf_village/streets/crossroad_01", pathchange), 2),
+                         Pair.of(StructurePoolElement.ofProcessedLegacySingle("warhammermod:dwarf_village/streets/crossroad_02", pathchange), 1),
+                         Pair.of(StructurePoolElement.ofProcessedLegacySingle("warhammermod:dwarf_village/streets/turn_01",pathchange), 3)),
+                 StructurePool.Projection.TERRAIN_MATCHING));
 
          StructurePools.register(new StructurePool(new Identifier("warhammermod:dwarf_village/houses"), new Identifier("dwarf_village/terminators"),ImmutableList.of(
                  Pair.of(StructurePoolElement.ofProcessedLegacySingle(location("houses/dwarf_small_house_1").toString(), StructureProcessorLists.EMPTY), 3),

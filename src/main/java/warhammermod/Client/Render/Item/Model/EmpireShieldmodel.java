@@ -4,9 +4,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.model.*;
 import net.minecraft.item.Item;
-import net.minecraft.util.Identifier;
 import warhammermod.utils.Registry.ItemsInit;
-import warhammermod.utils.reference;
 @Environment(EnvType.CLIENT)
 public class EmpireShieldmodel extends abstractModshieldModel {
 

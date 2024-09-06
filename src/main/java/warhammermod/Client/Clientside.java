@@ -4,9 +4,9 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.client.item.ModelPredicateProviderRegistry;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.entity.FlyingItemEntityRenderer;
@@ -14,7 +14,6 @@ import net.minecraft.client.render.entity.model.EntityModelLayer;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
-import net.minecraft.item.Items;
 import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 import warhammermod.Client.Render.Entity.Renders.DwarfRenderer;
@@ -39,8 +38,6 @@ import warhammermod.utils.Registry.Entityinit;
 import warhammermod.utils.Registry.ItemsInit;
 import warhammermod.utils.Registry.WHRegistry;
 import warhammermod.utils.reference;
-
-import java.util.List;
 
 import static warhammermod.utils.Registry.ItemsInit.netherite_halberd;
 
@@ -104,11 +101,10 @@ public class Clientside implements ClientModInitializer {
         EntityModelLayerRegistry.registerModelLayer(Grapeshot, (GrapeshotModel::createLayer));
         EntityModelLayerRegistry.registerModelLayer(Sling, (SlingModel::createLayer));
 
-
-     //   EntityModelLayerRegistry.registerModelLayer(Pegasus, Pegasusmodel::createBodyLayer);
-       // EntityModelLayerRegistry.registerModelLayer(pegasus_armor, Pegasusmodel::createarmorLayer);
-        //EntityModelLayerRegistry.registerModelLayer(Skaven, SkavenModel::createBodyLayer);
-        //EntityModelLayerRegistry.registerModelLayer(Dwarf, DwarfModel::getTexturedModelData);
+        EntityModelLayerRegistry.registerModelLayer(Pegasus, Pegasusmodel::createBodyLayer);
+        //EntityModelLayerRegistry.registerModelLayer(pegasus_armor, Pegasusmodel::createarmorLayer);
+        EntityModelLayerRegistry.registerModelLayer(Skaven, SkavenModel::createBodyLayer);
+        EntityModelLayerRegistry.registerModelLayer(Dwarf, DwarfModel::getTexturedModelData);
 
         BuiltinItemRendererRegistry.INSTANCE.register(ItemsInit.repeater_handgun,renderer);
         BuiltinItemRendererRegistry.INSTANCE.register(ItemsInit.RatlingGun,RatlingRender);
@@ -132,11 +128,11 @@ public class Clientside implements ClientModInitializer {
         EntityRendererRegistry.register(Entityinit.Grenade, GrenadeRender::new);
         EntityRendererRegistry.register(Entityinit.Shotentity, ShotRender::new);
         EntityRendererRegistry.register(Entityinit.WarpBullet, WarpbulletRender::new);
-/*
+
         EntityRendererRegistry.register(Entityinit.Pegasus, PegasusRenderer::new);
         EntityRendererRegistry.register(Entityinit.SKAVEN, SkavenRenderer::new);
         EntityRendererRegistry.register(Entityinit.DWARF, DwarfRenderer::new);
-*/
+
         ModelPredicates();
 
     }
@@ -188,32 +184,6 @@ public class Clientside implements ClientModInitializer {
         registerModelPredicate_Guns(ItemsInit.DrakeGun);
         registerModelPredicate_Guns(ItemsInit.RatlingGun);
         registerModelPredicate_Guns(ItemsInit.Warplock_jezzail);
-
-/*
-        FabricModelPredicateProviderRegistry.register(this,new Identifier("reloading"),(stack, worldIn, entityIn, i) ->  {
-            NbtCompound ammocounter = stack.getNbt();
-            if (entityIn != null && stack.getItem() instanceof GunBase && entityIn instanceof PlayerEntity && !((PlayerEntity) entityIn).isCreative() && entityIn.isUsingItem() && entityIn.getActiveItem() == stack && (ammocounter == null || ammocounter.getInt("ammo") <= 0)) {
-                if (ammocounter!=null && !isCharged(stack) && (entityIn.getItemUseTime())>((GunBase) stack.getItem()).getTimetoreload()){
-                    return 0.0F;
-
-                }
-                else return 1.0F;
-            }
-            else return 0.0F;
-        });
-        FabricModelPredicateProviderRegistry.register(this,new Identifier("reloaded"),(stack, worldIn, entityIn, i) ->  {
-            NbtCompound ammocounter = stack.getNbt();
-            if (entityIn != null && stack.getItem() instanceof GunBase && entityIn instanceof PlayerEntity && !((PlayerEntity) entityIn).isCreative() && entityIn.isUsingItem() && entityIn.getActiveItem() == stack && (ammocounter == null || ammocounter.getInt("ammo") <= 0)) {
-                if (ammocounter!=null && !isCharged(stack) && (entityIn.getItemUseTime())>((GunBase) stack.getItem()).getTimetoreload()){
-                    return 1.0F;
-
-                }
-                else return 2.0F;
-            }
-            else return 0.0F;
-        });
-
- */
     }
     public void registerModelPredicate_Guns(Item item){
         ModelPredicateProviderRegistry.register(item, Identifier.ofVanilla("reloading"), (stack, world, entity, seed) ->

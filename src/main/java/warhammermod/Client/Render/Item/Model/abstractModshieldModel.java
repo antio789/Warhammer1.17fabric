@@ -3,14 +3,12 @@ package warhammermod.Client.Render.Item.Model;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.model.Model;
 import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.Item;
-import net.minecraft.util.Identifier;
-import net.minecraft.client.model.Model;
-import warhammermod.utils.reference;
 
 @Environment(EnvType.CLIENT)
 public abstract class abstractModshieldModel extends Model {

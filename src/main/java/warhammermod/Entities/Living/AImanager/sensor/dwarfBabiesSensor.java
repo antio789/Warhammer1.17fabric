@@ -2,7 +2,6 @@ package warhammermod.Entities.Living.AImanager.sensor;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.LivingTargetCache;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
@@ -12,7 +11,6 @@ import warhammermod.utils.Registry.Entityinit;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class dwarfBabiesSensor extends Sensor<LivingEntity> {
    public Set<MemoryModuleType<?>> getOutputMemoryModules() {

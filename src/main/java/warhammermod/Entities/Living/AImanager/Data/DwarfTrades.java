@@ -6,7 +6,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.item.*;
+import net.minecraft.item.Items;
 import net.minecraft.util.Util;
 import net.minecraft.village.TradeOffers;
 import net.minecraft.village.TradeOffers.Factory;

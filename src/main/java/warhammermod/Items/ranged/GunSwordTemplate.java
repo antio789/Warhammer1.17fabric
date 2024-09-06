@@ -2,13 +2,11 @@ package warhammermod.Items.ranged;
 
 
 import net.minecraft.enchantment.Enchantments;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.SwordItem;
 import net.minecraft.item.ToolMaterial;
-import net.minecraft.item.ToolMaterials;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
@@ -21,7 +19,6 @@ import warhammermod.Items.Ammocomponent;
 import warhammermod.Items.IReloadItem;
 import warhammermod.utils.ModEnchantmentHelper;
 import warhammermod.utils.Registry.ItemsInit;
-import warhammermod.Items.melee.ShieldTemplate;
 import warhammermod.utils.Registry.WHRegistry;
 
 import java.util.Random;

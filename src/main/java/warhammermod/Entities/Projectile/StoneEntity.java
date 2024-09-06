@@ -1,7 +1,6 @@
 package warhammermod.Entities.Projectile;
 
 
-
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.EnvironmentInterface;
 import net.fabricmc.api.EnvironmentInterfaces;
@@ -14,7 +13,6 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import warhammermod.utils.Registry.Entityinit;
-import warhammermod.utils.Registry.ItemsInit;
 
 
 @EnvironmentInterfaces({@EnvironmentInterface(

@@ -6,6 +6,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.world.World;
+import warhammermod.Client.Render.Item.RenderRatlingGun;
 import warhammermod.Entities.Projectile.WarpBulletEntity;
 import warhammermod.Items.AutogunBase;
 import warhammermod.utils.ModEnchantmentHelper;
@@ -36,11 +37,11 @@ public class RatlingGun extends AutogunBase { //BOW enchantements
 
             world.spawnEntity(bullet);
         }
-        /*
-        else {
+
+        else if(world.isClient()){
             RenderRatlingGun.setrotationangle();
         }
-        */
+
         PlayaSound(world, player);
     }
 

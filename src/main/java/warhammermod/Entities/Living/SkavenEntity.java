@@ -14,7 +14,6 @@ import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.mob.HostileEntity;
-import net.minecraft.entity.mob.SlimeEntity;
 import net.minecraft.entity.passive.CatEntity;
 import net.minecraft.entity.passive.IronGolemEntity;
 import net.minecraft.entity.passive.MerchantEntity;
@@ -33,32 +32,28 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.ChunkRandom;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.*;
-import net.minecraft.world.biome.BiomeKeys;
 import org.jetbrains.annotations.Nullable;
+import warhammermod.Entities.Living.AImanager.Data.DwarfProfessionRecord;
 import warhammermod.Entities.Living.AImanager.RangedSkavenAttackGoal;
 import warhammermod.Entities.Projectile.StoneEntity;
 import warhammermod.Entities.Projectile.WarpBulletEntity;
 import warhammermod.Items.IReloadItem;
-import warhammermod.utils.ModEnchantmentHelper;
-import warhammermod.utils.Registry.ItemsInit;
 import warhammermod.Items.ranged.RatlingGun;
 import warhammermod.Items.ranged.SlingTemplate;
 import warhammermod.Items.ranged.WarpgunTemplate;
+import warhammermod.utils.ModEnchantmentHelper;
 import warhammermod.utils.Registry.Entityinit;
+import warhammermod.utils.Registry.ItemsInit;
 import warhammermod.utils.Registry.WHRegistry;
 import warhammermod.utils.functions;
-
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import static net.minecraft.component.type.AttributeModifierSlot.ARMOR;
 import static warhammermod.utils.reference.*;
 
 
@@ -190,18 +185,23 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
     /**
      * initializing
      */
+    @Deprecated
     protected void initData() {
         this.getDataTracker().set(SkavenType, Types.get(0));
     }
-
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(SkavenType, Types.get(0));
+    }
 
     private boolean fixgame; //skaven task dont work without was for 1.15 to test if still necessary
 
     public SkavenEntity(EntityType<? extends SkavenEntity> p_i48555_1_, World p_i48555_2_) {
         super(p_i48555_1_, p_i48555_2_);
         this.reassessWeaponGoal();
-        fixgame=true;
-        this.initData();
+        //fixgame=true;
+
     }
     @Nullable
     public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficultyIn, SpawnReason reason, @Nullable EntityData spawnDataIn) {
@@ -214,7 +214,7 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
         return spawnDataIn;
     }
 
-
+/*
     public void tickMovement() {
         if(fixgame){
             reassessWeaponGoal();
@@ -223,7 +223,7 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
         }
         super.tickMovement();
     }
-
+*/
         /**
          * attributes
          */
@@ -234,7 +234,7 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
         this.getAttributeInstance(EntityAttributes.GENERIC_ATTACK_DAMAGE).setBaseValue(AD);
     }
     public void handleAttributes(){
-        double speed = 0.55;
+        double speed = 0.5;
         double max_health = 18;
         double armor=0;
         double AD=1.5;
@@ -254,8 +254,8 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
             armor=5;
         }else if(getSkaventype().equals(gutter_runner)){
             AD=5;
-            max_health=17;
-            speed=0.75;
+            max_health=14;
+            speed=0.6;
         }
         updateSkavenAttributes(speed,max_health,armor,AD);
     };

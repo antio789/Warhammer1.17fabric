@@ -8,7 +8,6 @@ import com.google.common.collect.Lists;
 import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.brain.sensor.Sensor;
-import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -28,21 +27,21 @@ extends Sensor<DwarfEntity> {
     }
 
     @Override
-    protected void sense(ServerWorld serverWorld, DwarfEntity villagerEntity) {
+    protected void sense(ServerWorld serverWorld, DwarfEntity dwarfEntity) {
         RegistryKey<World> registryKey = serverWorld.getRegistryKey();
-        BlockPos blockPos = villagerEntity.getBlockPos();
+        BlockPos blockPos = dwarfEntity.getBlockPos();
         ArrayList<GlobalPos> list = Lists.newArrayList();
         int i = 4;
         for (int j = -4; j <= 4; ++j) {
             for (int k = -2; k <= 2; ++k) {
                 for (int l = -4; l <= 4; ++l) {
                     BlockPos blockPos2 = blockPos.add(j, k, l);
-                    if (!villagerEntity.getProfession().secondaryJobSites().contains(serverWorld.getBlockState(blockPos2).getBlock())) continue;
+                    if (!dwarfEntity.getProfession().secondaryJobSites().contains(serverWorld.getBlockState(blockPos2).getBlock())) continue;
                     list.add(GlobalPos.create(registryKey, blockPos2));
                 }
             }
         }
-        Brain<VillagerEntity> brain = villagerEntity.getBrain();
+        Brain<DwarfEntity> brain = dwarfEntity.getBrain();
         if (!list.isEmpty()) {
             brain.remember(MemoryModuleType.SECONDARY_JOB_SITE, list);
         } else {

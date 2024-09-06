@@ -86,6 +86,9 @@ public class ItemsInit {
             itemgroup.add(Dwarf_shield);
             itemgroup.add(Imperial_shield);
 
+            itemgroup.add(Entityinit.DWARF_SPAWN_EGG);
+            itemgroup.add(Entityinit.SKAVEN_SPAWN_EGG);
+            itemgroup.add(Entityinit.Pegasus_SPAWN_EGG);
         });
     }
     //FOOD
@@ -175,9 +178,7 @@ public class ItemsInit {
     private static final ItemGroup Modgroup = FabricItemGroup.builder()
             .icon(() -> new ItemStack(GHAL_MARAZ))
             .displayName(Text.translatable("itemGroup.warhammermod.warhammer"))
-            .entries((context, entries) -> {
-                entries.add(diamond_dagger);
-            }).build();
+            .build();
 
 
 

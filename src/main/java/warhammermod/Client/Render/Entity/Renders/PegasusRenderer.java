@@ -9,7 +9,7 @@ import net.minecraft.entity.passive.HorseColor;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 import warhammermod.Client.Clientside;
-import warhammermod.Client.Render.Entity.Renders.Layers.PegasusArmorLayer;
+import warhammermod.Client.Render.Entity.Renders.Layers.PegasusArmorFeatureRenderer;
 import warhammermod.Client.Render.Entity.Renders.Layers.PegasusMarkingsLayer;
 import warhammermod.Client.Render.Entity.Renders.Models.Pegasusmodel;
 import warhammermod.Entities.Living.PegasusEntity;
@@ -34,7 +34,7 @@ public final class PegasusRenderer extends AbstractHorseEntityRenderer<PegasusEn
 
    public PegasusRenderer(EntityRendererFactory.Context context) {
       super(context, new Pegasusmodel<>(context.getPart(Clientside.Pegasus)), 1.1F);
-      this.addFeature( new PegasusArmorLayer(this, context.getModelLoader()));
+      this.addFeature( new PegasusArmorFeatureRenderer(this, context.getModelLoader()));
       this.addFeature(new PegasusMarkingsLayer(this));
    }
 

@@ -1,10 +1,14 @@
 package warhammermod.Items.ranged;
 
+import net.minecraft.enchantment.Enchantments;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemConvertible;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
+import warhammermod.Client.Render.Item.RenderRepeater;
+import warhammermod.utils.ModEnchantmentHelper;
 
 
 public class Gun3DTemplate extends GunTemplate implements ItemConvertible {
@@ -13,15 +17,16 @@ public class Gun3DTemplate extends GunTemplate implements ItemConvertible {
     }
     public void fire(PlayerEntity player, World world, ItemStack stack) {
         super.fire(player, world, stack);
-        /*
+
         if(world.isClient()) RenderRepeater.setrotationangle();
-*/
+
     }
-    private static int setrotationangle(int i){
-        if(i==300){
-            return 0;
+
+    public void onStoppedUsing(ItemStack stack, World worldIn, LivingEntity entityLiving, int timeLeft) {
+        super.onStoppedUsing(stack, worldIn, entityLiving, timeLeft);
+        if(timetoreload<=getMaxUseTime()-timeLeft && worldIn.isClient()){
+            RenderRepeater.setdefaultangle();
         }
-        return (i+=60);
     }
 
 

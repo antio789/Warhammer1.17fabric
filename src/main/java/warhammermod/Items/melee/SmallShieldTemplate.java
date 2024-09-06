@@ -1,20 +1,7 @@
 package warhammermod.Items.melee;
 
 
-import com.mojang.authlib.minecraft.client.MinecraftClient;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.attribute.EntityAttributeInstance;
-import net.minecraft.entity.attribute.EntityAttributeModifier;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.item.ShieldItem;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.World;
-import warhammermod.utils.reference;
-
-import java.util.UUID;
 
 public class SmallShieldTemplate extends ShieldItem {
 

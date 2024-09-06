@@ -1,10 +1,7 @@
 package warhammermod.utils;
 
 
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
-import warhammermod.utils.Registry.ItemsInit;
 
 public class reference {
     public static final String modid = "warhammermod";

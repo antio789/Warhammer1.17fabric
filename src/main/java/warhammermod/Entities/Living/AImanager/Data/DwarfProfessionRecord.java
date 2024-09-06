@@ -18,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import warhammermod.Datageneration.Jobsitetagprovider;
 import warhammermod.utils.Registry.ItemsInit;
 import warhammermod.utils.Registry.WHRegistry;
-import warhammermod.Datageneration.moditemtagprovider;
 import warhammermod.utils.reference;
 
 import java.util.function.Predicate;
@@ -27,15 +26,13 @@ public record DwarfProfessionRecord(String name, int ID, Predicate<RegistryEntry
     public static void initialize(){
 
     }
-    public static final Predicate<RegistryEntry<PointOfInterestType>> IS_ACQUIRABLE_JOB_SITE = (poiType) -> {
-        return poiType.isIn(Jobsitetagprovider.ACQUIRABLE_JOB_SITE);
-    };
+    public static final Predicate<RegistryEntry<PointOfInterestType>> IS_ACQUIRABLE_JOB_SITE = (poiType) -> poiType.isIn(Jobsitetagprovider.ACQUIRABLE_JOB_SITE);
     public static final DwarfProfessionRecord Warrior = DwarfProfessionRecord.register(reference.Warrior,6,PointOfInterestType.NONE,IS_ACQUIRABLE_JOB_SITE,null,Items.IRON_AXE, ItemsInit.Dwarf_shield);
     public static final DwarfProfessionRecord Miner = DwarfProfessionRecord.register(reference.Miner,0,PointOfInterestTypes.ARMORER,null,Items.IRON_PICKAXE);
     public static final DwarfProfessionRecord Builder = DwarfProfessionRecord.register(reference.Builder,1,PointOfInterestTypes.MASON,SoundEvents.ENTITY_VILLAGER_WORK_MASON,ItemsInit.iron_warhammer);
     public static final DwarfProfessionRecord Engineer = DwarfProfessionRecord.register(reference.Engineer,2,PointOfInterestTypes.TOOLSMITH,SoundEvents.ENTITY_VILLAGER_WORK_TOOLSMITH,Items.IRON_AXE,ItemsInit.Dwarf_shield);
     public static final DwarfProfessionRecord FARMER = DwarfProfessionRecord.register(reference.Farmer,3,PointOfInterestTypes.FARMER,ImmutableSet.of(Items.WHEAT,Items.WHEAT_SEEDS,Items.BEETROOT_SEEDS,Items.BONE_MEAL),ImmutableSet.of(Blocks.FARMLAND),SoundEvents.ENTITY_VILLAGER_WORK_FARMER, Items.IRON_AXE,ItemStack.EMPTY.getItem());
-    public static final DwarfProfessionRecord Slayer = DwarfProfessionRecord.register(reference.Slayer, 4, PointOfInterestTypes.BUTCHER, SoundEvents.ENTITY_VILLAGER_WORK_BUTCHER, Items.IRON_AXE, Items.IRON_AXE);;
+    public static final DwarfProfessionRecord Slayer = DwarfProfessionRecord.register(reference.Slayer, 4, PointOfInterestTypes.BUTCHER, SoundEvents.ENTITY_VILLAGER_WORK_BUTCHER, Items.IRON_AXE, Items.IRON_AXE);
     public static final DwarfProfessionRecord Lord = DwarfProfessionRecord.register(reference.Lord,5,PointOfInterestType.NONE,PointOfInterestType.NONE,null,ItemsInit.GreatPick,ItemStack.EMPTY.getItem());
 
 

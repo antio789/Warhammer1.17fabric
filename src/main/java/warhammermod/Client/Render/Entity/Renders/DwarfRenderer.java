@@ -3,6 +3,7 @@ package warhammermod.Client.Render.Entity.Renders;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.MobEntityRenderer;
 import net.minecraft.client.render.entity.feature.HeldItemFeatureRenderer;
@@ -30,7 +31,14 @@ public class DwarfRenderer extends MobEntityRenderer<DwarfEntity, DwarfModel<Dwa
 
     public DwarfRenderer(EntityRendererFactory.Context context) {
         super(context, new DwarfModel<>(context.getPart(Clientside.Dwarf)), 0.25F); // 0.5F default
-        this.addFeature(new HeldItemFeatureRenderer<>(this, context.getHeldItemRenderer()));
+        this.addFeature(new HeldItemFeatureRenderer<>(this, context.getHeldItemRenderer()){
+            public void render(MatrixStack stack, VertexConsumerProvider consumerProvider, int i, DwarfEntity entity, float f, float g, float h, float j, float k, float l) {
+                if (entity.isAttacking()) {
+                    super.render(stack, consumerProvider, i, entity, f, g, h, j, k, l);
+                }
+
+            }
+        });
         this.addFeature(new DwarfLevellayer<>(this));
     }
 

@@ -9,7 +9,6 @@ import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.model.EntityModelLoader;
 import net.minecraft.client.render.item.ItemRenderer;
-import net.minecraft.client.render.model.json.ModelTransformation;
 import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
@@ -39,7 +38,13 @@ public class RenderRepeater implements BuiltinItemRendererRegistry.DynamicItemRe
         model = new RepeaterModel(entityModelSet.getModelPart(Clientside.Repeaterlayer));
     }
     public static void setrotationangle(){
-        if(rotation==300){
+        if(rotation>=300){
+            rotation=0;
+        }else rotation+=60;
+    }
+
+    public static void setdefaultangle(){
+        if(rotation>=300){
             rotation=0;
         }else rotation+=60;
     }

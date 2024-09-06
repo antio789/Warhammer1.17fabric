@@ -1,28 +1,17 @@
 package warhammermod.Items;
 
 
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.RangedWeaponItem;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.UseAction;
 import net.minecraft.world.World;
-import org.jetbrains.annotations.Nullable;
-import warhammermod.utils.Registry.WHRegistry;
 
 import java.util.Random;
-import java.util.function.Predicate;
 
 public abstract class AutogunBase extends GunBase implements IReloadItem {
     protected Random rand= new Random();
@@ -35,8 +24,7 @@ public abstract class AutogunBase extends GunBase implements IReloadItem {
         FireRate=firerate;
     }
     public void usageTick(World world, LivingEntity player, ItemStack stack, int count) {
-        if (player instanceof PlayerEntity){
-            PlayerEntity entityplayer = (PlayerEntity) player;
+        if (player instanceof PlayerEntity entityplayer){
             if((isCharged(stack) && (getMaxUseTime()-count)/getFireRate()<=getCharge(stack))|| entityplayer.isCreative()) {
                 if((getMaxUseTime()-count)!=0 && (getMaxUseTime()-count)%getFireRate()==0){
                     fire( entityplayer,world,stack);
@@ -66,11 +54,6 @@ public abstract class AutogunBase extends GunBase implements IReloadItem {
     }
     public int getFireRate() {
         return FireRate;
-    }
-    public UseAction getUseAction(ItemStack stack) {
-        return UseAction.BOW;
-    }
-    public void inventoryTick(ItemStack p_77663_1_, World p_77663_2_, Entity entity, int p_77663_4_, boolean p_77663_5_) {
     }
 
 }

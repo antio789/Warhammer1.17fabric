@@ -7,7 +7,6 @@ import net.minecraft.loot.context.LootContextType;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryWrapper;
 
-
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 

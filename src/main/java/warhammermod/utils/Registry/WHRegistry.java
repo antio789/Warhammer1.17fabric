@@ -4,7 +4,6 @@ package warhammermod.utils.Registry;
 import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
 import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
-
 import net.minecraft.component.ComponentType;
 import net.minecraft.entity.SpawnLocationTypes;
 import net.minecraft.entity.SpawnRestriction;
@@ -17,16 +16,16 @@ import net.minecraft.sound.SoundEvent;
 import net.minecraft.structure.processor.StructureProcessorList;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.Heightmap;
+import warhammermod.Entities.Living.AImanager.Data.DwarfProfessionRecord;
 import warhammermod.Entities.Living.AImanager.Data.DwarfTasks.Sensor.DwarfSecondaryPointsOfInterestSensor;
+import warhammermod.Entities.Living.AImanager.Data.DwarfTasks.Sensor.LordLastSeenSensor;
 import warhammermod.Entities.Living.AImanager.Data.EntityAttributes;
 import warhammermod.Entities.Living.AImanager.sensor.DwarfHostilesSensor;
-import warhammermod.Entities.Living.AImanager.Data.DwarfTasks.Sensor.LordLastSeenSensor;
 import warhammermod.Entities.Living.AImanager.sensor.dwarfBabiesSensor;
 import warhammermod.Entities.Living.SkavenEntity;
 import warhammermod.Items.Ammocomponent;
 import warhammermod.mixin.accesssensor;
 import warhammermod.utils.reference;
-import warhammermod.Entities.Living.AImanager.Data.DwarfProfessionRecord;
 public class WHRegistry {
 
     public static final RegistryKey<LootTable> HERO_OF_THE_VILLAGE_LORD_GIFT_GAMEPLAY;
@@ -36,6 +35,9 @@ public class WHRegistry {
     public static void initialize() {
         registercomponents();
         registersounds();
+        registersensors();
+        registerattributes();
+        registerprofessions();
     }
 
     public static void registercomponents(){
@@ -103,9 +105,10 @@ public class WHRegistry {
 
 
     public static void registerprofessions(){
+        DwarfProfessionRecord.initialize();
     }
     static{
-        DwarfProfessionRecord.initialize();
+
         SECONDARY_POIS= Registry.register(Registries.SENSOR_TYPE,SECONDARY_POIS_id, accesssensor.init(DwarfSecondaryPointsOfInterestSensor::new));
 
         HERO_OF_THE_VILLAGE_LORD_GIFT_GAMEPLAY= RegistryKey.of(RegistryKeys.LOOT_TABLE,Identifier.of(reference.modid,"dwarf_profession"));

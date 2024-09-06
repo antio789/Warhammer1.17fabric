@@ -75,7 +75,7 @@ public class Pegasusmodel<T extends PegasusEntity> extends HorseEntityModel<T> {
       return result;
    }
 
-   public void prepareMobModel(T entityIn, float limbSwing, float limbSwingAmount, float partialTick) {
+   public void animateModel(T entityIn, float limbSwing, float limbSwingAmount, float partialTick) {
       super.animateModel(entityIn,limbSwing,limbSwingAmount,partialTick);
       if(entityIn.isIsstationaryflying()) {
          if (WingAngle > 0.6) {
@@ -112,7 +112,7 @@ public class Pegasusmodel<T extends PegasusEntity> extends HorseEntityModel<T> {
          wingLend.pitch=0F;
          WingRbone.pitch=0F;
          WingLBone.pitch=0F;
-         //WingAngleElytra+=WingDirection*0.4F;
+         WingAngleElytra+=WingDirection*0.2F;
 
       }
       //should only activate when flyingdownsafely rework ongroundtimer not working when half of the entity not on a block
@@ -142,10 +142,6 @@ public class Pegasusmodel<T extends PegasusEntity> extends HorseEntityModel<T> {
          wingRend.pitch=-0.06F;
          wingLend.pitch=-0.06F;
       }
-      if(!entityIn.isgrounded()){
-         if(ongroundtimer<18) ongroundtimer++;
-      }
-      else ongroundtimer=0;
 
 
    }

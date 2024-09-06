@@ -75,6 +75,14 @@
   "entity.warhammermod.dwarf.warhammermod.slayer":"Slayer",
   "entity.warhammermod.dwarf.warhammermod.lord":"Lord",
 
+  "entity.warhammermod.dwarf.miner":"Miner",
+  "entity.warhammermod.dwarf.warrior":"Warrior",
+  "entity.warhammermod.dwarf.builder":"Builder",
+  "entity.warhammermod.dwarf.engineer":"Engineer",
+  "entity.warhammermod.dwarf.farmer":"Farmer",
+  "entity.warhammermod.dwarf.slayer":"Slayer",
+  "entity.warhammermod.dwarf.lord":"Lord",
+
   "entity.warhammermod.dwarf":"Dwarf",
   "entity.warhammermod.pegasus":"Pegasus",
   "entity.warhammermod.skaven":"Skaven",

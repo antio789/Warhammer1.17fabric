@@ -1,31 +1,23 @@
 package warhammermod.Items;
 
 
-import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.RangedWeaponItem;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.ParticleEffect;
-import net.minecraft.particle.ParticleTypes;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.UseAction;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
-import org.spongepowered.asm.mixin.MixinEnvironment;
-import warhammermod.Items.melee.ShieldTemplate;
 import warhammermod.utils.ModEnchantmentHelper;
 import warhammermod.utils.Registry.WHRegistry;
-import warhammermod.utils.reference;
 
 import java.util.Random;
 import java.util.function.Predicate;

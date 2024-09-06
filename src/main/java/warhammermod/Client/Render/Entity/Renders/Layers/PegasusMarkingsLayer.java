@@ -14,8 +14,8 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.passive.HorseMarking;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
-import warhammermod.Entities.Living.PegasusEntity;
 import warhammermod.Client.Render.Entity.Renders.Models.Pegasusmodel;
+import warhammermod.Entities.Living.PegasusEntity;
 
 import java.util.Map;
 

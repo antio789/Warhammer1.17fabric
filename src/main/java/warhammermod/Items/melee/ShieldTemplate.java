@@ -1,14 +1,11 @@
 package warhammermod.Items.melee;
 
 
-
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ShieldItem;
-import net.minecraft.util.Identifier;
 import warhammermod.Items.GunBase;
-import warhammermod.utils.reference;
 
 public class ShieldTemplate  extends ShieldItem {
 

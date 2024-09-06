@@ -28,7 +28,7 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-
+//would be nice to use vanilla enchantements
 public abstract class ProjectileBase extends PersistentProjectileEntity {
 
     @Nullable

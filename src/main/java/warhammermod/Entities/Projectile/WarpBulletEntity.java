@@ -1,13 +1,11 @@
 package warhammermod.Entities.Projectile;
 
 
-
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.world.World;
 import warhammermod.utils.Registry.Entityinit;
