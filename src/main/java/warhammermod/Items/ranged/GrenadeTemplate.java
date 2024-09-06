@@ -10,6 +10,7 @@ import net.minecraft.particle.ParticleTypes;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.world.World;
+import warhammermod.Enchantements.ModEnchantements;
 import warhammermod.Entities.Projectile.GrenadeEntity;
 import warhammermod.Items.GunBase;
 import warhammermod.utils.ModEnchantmentHelper;
@@ -29,10 +30,10 @@ public class GrenadeTemplate extends GunBase { // need power punch, unbreaking m
             GrenadeEntity bullet = new GrenadeEntity(player, world,stack,findAmmo(player));
             bullet.setPosition(player.getX(),player.getEyeY()-0.26,player.getZ());
 
-            int i = ModEnchantmentHelper.getLevel(world, stack, Enchantments.POWER);
+            int i = ModEnchantmentHelper.getLevel(world, stack, ModEnchantements.RANGE);
             bullet.setVelocity(player,player.getPitch(), player.getYaw(), 0, 0.7F + 0.13F * i, 0.6F);
 
-            int k = ModEnchantmentHelper.getLevel(world, stack, Enchantments.PUNCH) + 1;
+            int k = ModEnchantmentHelper.getLevel(world, stack, ModEnchantements.RADIUS);
             if (k > 0) {
                 bullet.setknockbacklevel(k);
             }

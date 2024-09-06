@@ -1,6 +1,7 @@
 package warhammermod;
 
 import net.fabricmc.api.ModInitializer;
+import warhammermod.Enchantements.ModEnchantements;
 import warhammermod.utils.Registry.Entityinit;
 import warhammermod.utils.Registry.ItemsInit;
 import warhammermod.utils.Registry.WHRegistry;
@@ -18,6 +19,7 @@ public class mainInit implements ModInitializer {
         // This code runs as soon as Minecraft is in a mod-load-ready state.
         // However, some things (like resources) may still be uninitialized.
         // Proceed with mild caution.
+        ModEnchantements.initialize();
         Entityinit.initializeEntities();
         ItemsInit.initialize();
 

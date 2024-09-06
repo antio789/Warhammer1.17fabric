@@ -3,6 +3,7 @@
   "description": {
     "translate": "enchantment.warhammermod.radius"
   },
+  "exclusive_set": "#warhammermod:exclusive_set/grenade",
   "max_cost": {
     "base": 37,
     "per_level_above_first": 20
@@ -15,6 +16,6 @@
   "slots": [
     "mainhand"
   ],
-  "supported_items": "#warhammermod:range",
+  "supported_items": "#warhammermod:tag.item.warhammermod.grenade_enchantements",
   "weight": 2
 }
