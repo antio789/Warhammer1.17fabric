@@ -87,6 +87,9 @@ public abstract class GunBase extends RangedWeaponItem implements IReloadItem { 
             if (isCharged(stack) || player.isCreative()) {
                 fire(player,worldIn,stack);
                 if(!player.isCreative())setAmmoused(stack,getCharge(stack)-1);
+                else {
+                    stack.set(WHRegistry.AMMO,new Ammocomponent(getCharge(stack),getMagCount(stack)+1));
+                }
             }
             else if(timetoreload<=getMaxUseTime()-timeLeft) {
                 int ammoreserve = this.findAmmo(player).getCount();
@@ -105,6 +108,7 @@ public abstract class GunBase extends RangedWeaponItem implements IReloadItem { 
             }
         }
     }
+
     public boolean isReadytoFire(ItemStack stack){
         return isCharged(stack);
     }

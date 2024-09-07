@@ -16,7 +16,8 @@ public class mainInit implements ModInitializer {
      * to do:
      * -enchantements ok?
      * modelaction of items ok?
-     * rotation of models: to fix as currently it applies to all, see how to change that.
+     * rotation of models: to fix as currently it applies to all, see how to change that. ok-ish does not translate outside the clientplayer view.
+     * loading time for weapons
      */
     @Override
     public void onInitialize() {

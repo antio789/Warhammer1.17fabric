@@ -5,12 +5,14 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "accesssensor"
+
   ],
   "server": [
 
 
   ],
   "client": [
+    "gunreload"
   ],
   "injectors": {
     "defaultRequire": 1

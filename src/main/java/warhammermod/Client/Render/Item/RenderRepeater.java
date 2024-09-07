@@ -75,7 +75,6 @@ public class RenderRepeater implements BuiltinItemRendererRegistry.DynamicItemRe
         // need to find a way to make this work rolls all stacks with same components.
         this.model.barrel_holder1.roll =50*rotation_calc(stack);//(60*stack.getOrDefault(WHRegistry.Fireorder, firecomponent.DEFAULT).firecount());
 
-
         VertexConsumer ivertexbuilder1 = ItemRenderer.getDirectItemGlintConsumer(vertexConsumers, this.model.getLayer(TEXTURE), false, stack.hasGlint());
         this.model.render(matrices,ivertexbuilder1,light, OverlayTexture.DEFAULT_UV);
         matrices.pop();

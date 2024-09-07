@@ -2,21 +2,25 @@ package warhammermod.Items.ranged;
 
 
 import net.minecraft.enchantment.Enchantments;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.world.World;
 import warhammermod.Client.Render.Item.RenderRatlingGun;
 import warhammermod.Entities.Projectile.WarpBulletEntity;
+import warhammermod.Items.Ammocomponent;
 import warhammermod.Items.AutogunBase;
+import warhammermod.Items.firecomponent;
 import warhammermod.utils.ModEnchantmentHelper;
 import warhammermod.utils.Registry.ItemsInit;
+import warhammermod.utils.Registry.WHRegistry;
 
 
 public class RatlingGun extends AutogunBase { //BOW enchantements
 
     public RatlingGun(Settings properties, int MagSize, int time) {
-        super(properties, ItemsInit.Warpstone,time,MagSize,64, 6);
+        super(properties.component(WHRegistry.Fireorder, firecomponent.DEFAULT), ItemsInit.Warpstone,time,MagSize,64, 6);
     }
 
 
@@ -40,13 +44,16 @@ public class RatlingGun extends AutogunBase { //BOW enchantements
 
         else if(world.isClient()){
             RenderRatlingGun.playerfired(player);
-
+            stack.set(WHRegistry.Fireorder,new firecomponent(stack.getOrDefault(WHRegistry.Fireorder,firecomponent.DEFAULT).firecount()+1));
         }
-
         PlayaSound(world, player);
     }
 
-    public void PlayaSound(World world, PlayerEntity player){
+    public void onStoppedUsing(ItemStack stack, World worldIn, LivingEntity entityLiving, int timeLeft) {//implement infinity if possible
+        stack.set(WHRegistry.Fireorder,new firecomponent(firecomponent.DEFAULT.firecount()));
+    }
+
+        public void PlayaSound(World world, PlayerEntity player){
         player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.ENTITY_GENERIC_EXPLODE, player.getSoundCategory(), 0.6f, 1.55F/(rand.nextFloat()*0.4F+1.2F)+0.5F);
     }
 }
