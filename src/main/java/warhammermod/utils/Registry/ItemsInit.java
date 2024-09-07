@@ -139,7 +139,7 @@ public class ItemsInit {
 
     public static Item musket = register(new GunTemplate(new Item.Settings().maxDamage(420), Cartridge,40,1,13),"musket");
     public static Item pistol = register(new GunTemplate(new Item.Settings().maxDamage(384), Cartridge,25,1,8),"pistol");
-    public static Item repeater_handgun = register(new Gun3DTemplate(new Item.Settings().maxDamage(500), Cartridge,92,6,13),"repeater_handgun");
+    public static Item repeater_handgun = register(new Gun3DTemplate(new Item.Settings().maxDamage(500), Cartridge,92,6,13),"nuln_repeater_handgun");
     public static Item thunderer_handgun = register(new GunTemplate(new Item.Settings().maxDamage(540), Cartridge,35,1,16),"thunderer_handgun");
 
     public static Item blunderbuss = register(new ShotgunTemplate(new Item.Settings().maxDamage(390), Shotshell,40,1,19),"blunderbuss");

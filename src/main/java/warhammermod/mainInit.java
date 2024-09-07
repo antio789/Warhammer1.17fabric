@@ -1,10 +1,14 @@
 package warhammermod;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.minecraft.util.Identifier;
 import warhammermod.Enchantements.ModEnchantements;
+import warhammermod.utils.ItemFiringPayload;
 import warhammermod.utils.Registry.Entityinit;
 import warhammermod.utils.Registry.ItemsInit;
 import warhammermod.utils.Registry.WHRegistry;
+import warhammermod.utils.reference;
 
 
 public class mainInit implements ModInitializer {
@@ -24,9 +28,11 @@ public class mainInit implements ModInitializer {
         ItemsInit.initialize();
 
         WHRegistry.initialize();
-
+        PayloadTypeRegistry.playS2C().register(ItemFiringPayload.ID, ItemFiringPayload.CODEC);
         //Spawn.addEntitySpawn();
     }
+
+    public static final Identifier HIGHLIGHT_PACKET_ID = Identifier.of(reference.modid, "shooting_packet");
 
 
 

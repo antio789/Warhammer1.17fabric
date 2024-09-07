@@ -5,6 +5,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -12,6 +13,7 @@ import net.minecraft.client.render.entity.model.EntityModelLoader;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.resource.SynchronousResourceReloader;
@@ -26,7 +28,7 @@ public class RenderRatlingGun implements BuiltinItemRendererRegistry.DynamicItem
     private static final String resource_location="textures/item/ratlinggun.png";
     static final Identifier TEXTURE = Identifier.of(reference.modid,resource_location);
     private RatlingGunModel model;
-    private static int rotation;
+    private int rotation;
     private EntityModelLoader entityModelSet;
 
     public RenderRatlingGun(){
@@ -39,19 +41,22 @@ public class RenderRatlingGun implements BuiltinItemRendererRegistry.DynamicItem
         model = new RatlingGunModel(entityModelSet.getModelPart(Clientside.RAtlingLayer));
     }
 //need update component
-    public static void setrotationangle(){
-        if(rotation==300){
-            rotation=0;
-        }else rotation+=60;
+
+    private static PlayerEntity clientplayer;
+
+    public static void playerfired(PlayerEntity player){
+        clientplayer=player;
     }
-
-
 
     @Override
     public void render(ItemStack stack, ModelTransformationMode mode, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay) {
         matrices.push();
         matrices.scale(1.0F, -1.0F, -1.0F);
-        this.model.cannonback.roll=rotation;
+        if(clientplayer!=null && clientplayer.getActiveItem()!=null && clientplayer.getActiveItem().equals(stack)){
+            this.model.cannonback.roll=rotation+=50;
+            clientplayer=null;
+        }
+
         VertexConsumer ivertexbuilder1 = ItemRenderer.getDirectItemGlintConsumer(vertexConsumers, this.model.getLayer(TEXTURE), false, stack.hasGlint());
         this.model.render(matrices,ivertexbuilder1,light, OverlayTexture.DEFAULT_UV);
         //this.model.render(matrices,ivertexbuilder1,light,overlay,1);

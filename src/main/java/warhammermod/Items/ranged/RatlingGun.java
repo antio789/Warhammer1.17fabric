@@ -39,7 +39,8 @@ public class RatlingGun extends AutogunBase { //BOW enchantements
         }
 
         else if(world.isClient()){
-            RenderRatlingGun.setrotationangle();
+            RenderRatlingGun.playerfired(player);
+
         }
 
         PlayaSound(world, player);

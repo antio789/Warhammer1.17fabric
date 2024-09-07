@@ -86,9 +86,9 @@ public abstract class GunBase extends RangedWeaponItem implements IReloadItem { 
         if (entityLiving instanceof PlayerEntity player) {
             if (isCharged(stack) || player.isCreative()) {
                 fire(player,worldIn,stack);
-                if(!player.isCreative())setCharge(stack,getCharge(stack)-1);
+                if(!player.isCreative())setAmmoused(stack,getCharge(stack)-1);
             }
-            else if(timetoreload<=getMaxUseTime()-timeLeft && !worldIn.isClient()) {
+            else if(timetoreload<=getMaxUseTime()-timeLeft) {
                 int ammoreserve = this.findAmmo(player).getCount();
                 int infinitylevel = ModEnchantmentHelper.getLevel(worldIn, stack, Enchantments.INFINITY);
                 if (ammoreserve < Magsize) {
@@ -124,8 +124,16 @@ public abstract class GunBase extends RangedWeaponItem implements IReloadItem { 
         return stack.getOrDefault(WHRegistry.AMMO,Ammocomponent.DEFAULT).ammocount();
     }
 
+    public static int getMagCount(ItemStack stack) {
+        return stack.getOrDefault(WHRegistry.AMMO,Ammocomponent.DEFAULT).startammo();
+    }
+
     public static void setCharge(ItemStack stack, int ammo) {
-        stack.set(WHRegistry.AMMO,new Ammocomponent(ammo));
+        stack.set(WHRegistry.AMMO,new Ammocomponent(ammo,ammo));
+    }
+
+    public static void setAmmoused(ItemStack stack, int ammo) {
+        stack.set(WHRegistry.AMMO,new Ammocomponent(ammo,getMagCount(stack)));
     }
 
     @Override

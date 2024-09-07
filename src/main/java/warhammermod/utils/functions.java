@@ -23,6 +23,15 @@ public class functions {
         }
         timer--;
     }
+    static Object printermem;
+
+    public static void printer_norepeat(Object object){
+        if(!object.equals(printermem)){
+            System.out.println(object+ " :: object printed for debugging");
+            printermem=object;
+        }
+    }
+
 
     public static double getFallHeightFromSpeed(double y){
         return -22.8*Math.pow(y,5) +154*Math.pow(y,4) - 317*Math.pow(y,3) + 278*Math.pow(y,2) - 81.1*y;

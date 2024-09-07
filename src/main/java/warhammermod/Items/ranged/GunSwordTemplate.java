@@ -157,7 +157,7 @@ public class GunSwordTemplate extends SwordItem implements IReloadItem { //needs
     }
 
     public static void setCharge(ItemStack stack, int ammo) {
-        stack.set(WHRegistry.AMMO,new Ammocomponent(ammo));
+        stack.set(WHRegistry.AMMO,new Ammocomponent(ammo,ammo));
     }
 
     @Override

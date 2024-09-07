@@ -24,6 +24,7 @@ import warhammermod.Entities.Living.AImanager.sensor.DwarfHostilesSensor;
 import warhammermod.Entities.Living.AImanager.sensor.dwarfBabiesSensor;
 import warhammermod.Entities.Living.SkavenEntity;
 import warhammermod.Items.Ammocomponent;
+import warhammermod.Items.firecomponent;
 import warhammermod.mixin.accesssensor;
 import warhammermod.utils.reference;
 public class WHRegistry {
@@ -31,6 +32,7 @@ public class WHRegistry {
     public static final RegistryKey<LootTable> HERO_OF_THE_VILLAGE_LORD_GIFT_GAMEPLAY;
 
     public static final ComponentType<Ammocomponent> AMMO= ComponentType.<Ammocomponent>builder().codec(Ammocomponent.CODEC).packetCodec(Ammocomponent.PACKET_CODEC).build();
+    public static final ComponentType<firecomponent> Fireorder= ComponentType.<firecomponent>builder().codec(firecomponent.CODEC).packetCodec(firecomponent.PACKET_CODEC).build();
 
     public static void initialize() {
         registercomponents();
@@ -42,6 +44,7 @@ public class WHRegistry {
 
     public static void registercomponents(){
         Registry.register(Registries.DATA_COMPONENT_TYPE, Identifier.of(reference.modid,"ammo"),AMMO);
+        Registry.register(Registries.DATA_COMPONENT_TYPE, Identifier.of(reference.modid,"fireorder"),Fireorder);
     }
 
     public static void registerattributes(){

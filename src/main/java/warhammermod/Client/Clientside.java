@@ -4,6 +4,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
@@ -34,6 +35,7 @@ import warhammermod.Client.Render.Item.RenderShield;
 import warhammermod.Client.Render.Item.RenderSling;
 import warhammermod.Items.Ammocomponent;
 import warhammermod.Items.GunBase;
+import warhammermod.utils.ItemFiringPayload;
 import warhammermod.utils.Registry.Entityinit;
 import warhammermod.utils.Registry.ItemsInit;
 import warhammermod.utils.Registry.WHRegistry;
@@ -88,6 +90,58 @@ public class Clientside implements ClientModInitializer {
     @Override
     public void onInitializeClient(){
 
+        registerkeys();
+        registerRenderer();
+        registerModelLayer();
+        registerModelPredicates();
+
+        ClientPlayNetworking.registerGlobalReceiver(ItemFiringPayload.ID, (payload, context) -> {
+           context.client().execute(() -> RenderRepeater.ItemstackFired(payload.stack()));
+        });
+    }
+
+    public void registerkeys(){
+        pegasus_down = KeyBindingHelper.registerKeyBinding(new KeyBinding("key"+reference.modid+"pegasusdown",
+                InputUtil.Type.KEYSYM,
+                GLFW.GLFW_KEY_R,
+                "category"+reference.modid
+                ));
+        Wiki_Map = KeyBindingHelper.registerKeyBinding(new KeyBinding("key"+reference.modid+"wiki_map",
+                InputUtil.Type.KEYSYM,
+                GLFW.GLFW_KEY_L,
+                "category"+reference.modid
+        ));
+    }
+    public void registerRenderer(){
+        BuiltinItemRendererRegistry.INSTANCE.register(ItemsInit.repeater_handgun,renderer);
+        BuiltinItemRendererRegistry.INSTANCE.register(ItemsInit.RatlingGun,RatlingRender);
+
+        BuiltinItemRendererRegistry.INSTANCE.register(ItemsInit.High_Elf_Shield,HEShieldRender);
+        BuiltinItemRendererRegistry.INSTANCE.register(ItemsInit.Dark_Elf_Shield,DEShieldRender);
+        BuiltinItemRendererRegistry.INSTANCE.register(ItemsInit.Dwarf_shield,DwarfShieldRender);
+        BuiltinItemRendererRegistry.INSTANCE.register(ItemsInit.Imperial_shield,EMShieldRender);
+        BuiltinItemRendererRegistry.INSTANCE.register(ItemsInit.Skaven_shield,SKShieldRender);
+
+        BuiltinItemRendererRegistry.INSTANCE.register(ItemsInit.Sling,SlingRender);
+
+
+
+        EntityRendererRegistry.register(Entityinit.halberdthrust, HalberdRender::new);
+        EntityRendererRegistry.register(Entityinit.Bullet, BulletRender::new);
+        EntityRendererRegistry.register(Entityinit.SpearProjectile, RenderSpear::new);
+        EntityRendererRegistry.register(Entityinit.STONEENTITY, FlyingItemEntityRenderer::new);
+        EntityRendererRegistry.register(Entityinit.Flame, FlyingItemEntityRenderer::new);
+
+        EntityRendererRegistry.register(Entityinit.Grenade, GrenadeRender::new);
+        EntityRendererRegistry.register(Entityinit.Shotentity, ShotRender::new);
+        EntityRendererRegistry.register(Entityinit.WarpBullet, WarpbulletRender::new);
+
+        EntityRendererRegistry.register(Entityinit.Pegasus, PegasusRenderer::new);
+        EntityRendererRegistry.register(Entityinit.SKAVEN, SkavenRenderer::new);
+        EntityRendererRegistry.register(Entityinit.DWARF, DwarfRenderer::new);
+    }
+
+    public void registerModelLayer(){
         EntityModelLayerRegistry.registerModelLayer(DEShield, DarkElfshieldmodel::createLayer);
         EntityModelLayerRegistry.registerModelLayer(HEShield, HighelfshieldModel::createLayer);
         EntityModelLayerRegistry.registerModelLayer(EMShield, EmpireShieldmodel::createLayer);
@@ -105,53 +159,9 @@ public class Clientside implements ClientModInitializer {
         //EntityModelLayerRegistry.registerModelLayer(pegasus_armor, Pegasusmodel::createarmorLayer);
         EntityModelLayerRegistry.registerModelLayer(Skaven, SkavenModel::createBodyLayer);
         EntityModelLayerRegistry.registerModelLayer(Dwarf, DwarfModel::getTexturedModelData);
-
-        BuiltinItemRendererRegistry.INSTANCE.register(ItemsInit.repeater_handgun,renderer);
-        BuiltinItemRendererRegistry.INSTANCE.register(ItemsInit.RatlingGun,RatlingRender);
-
-        BuiltinItemRendererRegistry.INSTANCE.register(ItemsInit.High_Elf_Shield,HEShieldRender);
-        BuiltinItemRendererRegistry.INSTANCE.register(ItemsInit.Dark_Elf_Shield,DEShieldRender);
-        BuiltinItemRendererRegistry.INSTANCE.register(ItemsInit.Dwarf_shield,DwarfShieldRender);
-        BuiltinItemRendererRegistry.INSTANCE.register(ItemsInit.Imperial_shield,EMShieldRender);
-        BuiltinItemRendererRegistry.INSTANCE.register(ItemsInit.Skaven_shield,SKShieldRender);
-        
-        BuiltinItemRendererRegistry.INSTANCE.register(ItemsInit.Sling,SlingRender);
-        registerkeys();
-
-
-        EntityRendererRegistry.register(Entityinit.halberdthrust, HalberdRender::new);
-        EntityRendererRegistry.register(Entityinit.Bullet, BulletRender::new);
-        EntityRendererRegistry.register(Entityinit.SpearProjectile, RenderSpear::new);
-        EntityRendererRegistry.register(Entityinit.STONEENTITY, FlyingItemEntityRenderer::new);
-        EntityRendererRegistry.register(Entityinit.Flame, FlyingItemEntityRenderer::new);
-
-        EntityRendererRegistry.register(Entityinit.Grenade, GrenadeRender::new);
-        EntityRendererRegistry.register(Entityinit.Shotentity, ShotRender::new);
-        EntityRendererRegistry.register(Entityinit.WarpBullet, WarpbulletRender::new);
-
-        EntityRendererRegistry.register(Entityinit.Pegasus, PegasusRenderer::new);
-        EntityRendererRegistry.register(Entityinit.SKAVEN, SkavenRenderer::new);
-        EntityRendererRegistry.register(Entityinit.DWARF, DwarfRenderer::new);
-
-        ModelPredicates();
-
     }
 
-    public void registerkeys(){
-        pegasus_down = KeyBindingHelper.registerKeyBinding(new KeyBinding("key"+reference.modid+"pegasusdown",
-                InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_R,
-                "category"+reference.modid
-                ));
-        Wiki_Map = KeyBindingHelper.registerKeyBinding(new KeyBinding("key"+reference.modid+"wiki_map",
-                InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_L,
-                "category"+reference.modid
-        ));
-    }
-
-
-    public void ModelPredicates(){
+    public void registerModelPredicates(){
         ModelPredicateProviderRegistry.register(netherite_halberd, Identifier.of(reference.modid,"pull"), (itemStack, clientWorld, livingEntity, seed) -> {
             if (livingEntity == null) {
                 return 0.0F;
