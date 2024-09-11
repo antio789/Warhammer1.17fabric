@@ -33,7 +33,7 @@ public class RangedSkavenAttackGoal<T extends HostileEntity & RangedAttackMob> e
       this.setControls(EnumSet.of(Control.MOVE, Control.LOOK));
    }
 
-   public void setMinAttackInterval(int p_189428_1_) {
+   public void setAttackInterval(int p_189428_1_) {
       this.attackIntervalMin = p_189428_1_;
    }
 
@@ -64,68 +64,68 @@ public class RangedSkavenAttackGoal<T extends HostileEntity & RangedAttackMob> e
 
    public void tick() {
       LivingEntity livingentity = this.mob.getTarget();
-      if (livingentity != null) {
-         double d0 = this.mob.squaredDistanceTo(livingentity.getX(), livingentity.getY(), livingentity.getZ());
-         boolean flag = this.mob.getVisibilityCache().canSee(livingentity);
-         boolean flag1 = this.seeTime > 0;
-         if (flag != flag1) {
-            this.seeTime = 0;
-         }
-
-         if (flag) {
-            ++this.seeTime;
-         } else {
-            --this.seeTime;
-         }
-
-         if (!(d0 > (double)this.attackRadiusSqr) && this.seeTime >= 20) {
-            this.mob.getNavigation().stop();
-            ++this.strafingTime;
-         } else {
-            this.mob.getNavigation().startMovingTo(livingentity, this.speedModifier);
-            this.strafingTime = -1;
-         }
-
-         if (this.strafingTime >= 20) {
-            if ((double)this.mob.getRandom().nextFloat() < 0.3D) {
-               this.strafingClockwise = !this.strafingClockwise;
-            }
-
-            if ((double)this.mob.getRandom().nextFloat() < 0.3D) {
-               this.strafingBackwards = !this.strafingBackwards;
-            }
-
-            this.strafingTime = 0;
-         }
-
-         if (this.strafingTime > -1) {
-            if (d0 > (double)(this.attackRadiusSqr * 0.75F)) {
-               this.strafingBackwards = false;
-            } else if (d0 < (double)(this.attackRadiusSqr * 0.25F)) {
-               this.strafingBackwards = true;
-            }
-
-            this.mob.getMoveControl().strafeTo(this.strafingBackwards ? -0.5F : 0.5F, this.strafingClockwise ? 0.5F : -0.5F);
-            this.mob.lookAtEntity(livingentity, 30.0F, 30.0F);
-         } else {
-            this.mob.getLookControl().lookAt(livingentity, 30.0F, 30.0F);
-         }
-
-         if (this.mob.isUsingItem()) {
-            if (!flag && this.seeTime < -60) {
-               this.mob.clearActiveItem();
-            } else if (flag) {
-               int i = this.mob.getItemUseTime();
-               if (i >= 20) {
-                  this.mob.clearActiveItem();
-                  this.mob.attack(livingentity, 0);
-                  this.attackTime = this.attackIntervalMin;
-               }
-            }
-         } else if (--this.attackTime <= 0 && this.seeTime >= -60) {
-            this.mob.setCurrentHand(Hand.MAIN_HAND);
-         }
-
+      if (livingentity == null) {
+         return;
       }
+      double d = this.mob.squaredDistanceTo(livingentity.getX(), livingentity.getY(), livingentity.getZ());
+      boolean flag = this.mob.getVisibilityCache().canSee(livingentity);
+      boolean flag1 = this.seeTime > 0;
+      if (flag != flag1) {
+         this.seeTime = 0;
+      }
+
+      if (flag) {
+         ++this.seeTime;
+      } else {
+         --this.seeTime;
+      }
+
+      if (!(d > (double)this.attackRadiusSqr) && this.seeTime >= 20) {
+         this.mob.getNavigation().stop();
+         ++this.strafingTime;
+      } else {
+         this.mob.getNavigation().startMovingTo(livingentity, this.speedModifier);
+         this.strafingTime = -1;
+      }
+
+      if (this.strafingTime >= 20) {
+         if ((double)this.mob.getRandom().nextFloat() < 0.3D) {
+            this.strafingClockwise = !this.strafingClockwise;
+         }
+
+         if ((double)this.mob.getRandom().nextFloat() < 0.3D) {
+            this.strafingBackwards = !this.strafingBackwards;
+         }
+
+         this.strafingTime = 0;
+      }
+
+      if (this.strafingTime > -1) {
+         if (d > (double)(this.attackRadiusSqr * 0.75F)) {
+            this.strafingBackwards = false;
+         } else if (d < (double)(this.attackRadiusSqr * 0.25F)) {
+            this.strafingBackwards = true;
+         }
+
+         //this.mob.getMoveControl().strafeTo(this.strafingBackwards ? -0.5F : 0.5F, this.strafingClockwise ? 0.5F : -0.5F);
+         this.mob.lookAtEntity(livingentity, 30.0F, 30.0F);
+      } else {
+         this.mob.getLookControl().lookAt(livingentity, 30.0F, 30.0F);
+      }
+      if (this.mob.isUsingItem()) {
+         if (!flag && this.seeTime < -60) {
+            this.mob.clearActiveItem();
+         } else if (flag) {
+            int i = this.mob.getItemUseTime();
+            if (i >= 20) {
+               this.mob.clearActiveItem();
+               this.mob.attack(livingentity, 0);
+               this.attackTime = this.attackIntervalMin;
+            }
+         }
+      } else if (--this.attackTime <= 0 && this.seeTime >= -60) {
+         this.mob.setCurrentHand(Hand.MAIN_HAND);
+      }
+
    }
 }

@@ -14,16 +14,24 @@ import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.mob.HostileEntity;
+import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.mob.PatrolEntity;
+import net.minecraft.entity.mob.PillagerEntity;
 import net.minecraft.entity.passive.CatEntity;
 import net.minecraft.entity.passive.IronGolemEntity;
 import net.minecraft.entity.passive.MerchantEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.projectile.PersistentProjectileEntity;
+import net.minecraft.entity.projectile.ProjectileUtil;
 import net.minecraft.entity.projectile.thrown.PotionEntity;
+import net.minecraft.entity.raid.RaiderEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.ShieldItem;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.particle.EntityEffectParticleEffect;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.Potions;
 import net.minecraft.registry.entry.RegistryEntry;
@@ -39,6 +47,9 @@ import net.minecraft.world.*;
 import org.jetbrains.annotations.Nullable;
 import warhammermod.Entities.Living.AImanager.Data.DwarfProfessionRecord;
 import warhammermod.Entities.Living.AImanager.RangedSkavenAttackGoal;
+import warhammermod.Entities.Living.AImanager.SkavenAttackGoal;
+import warhammermod.Entities.Living.AImanager.SkavenRangedAttackGoal;
+import warhammermod.Entities.Living.AImanager.SkavenRangedUser;
 import warhammermod.Entities.Projectile.StoneEntity;
 import warhammermod.Entities.Projectile.WarpBulletEntity;
 import warhammermod.Items.IReloadItem;
@@ -57,12 +68,12 @@ import java.util.Arrays;
 import static warhammermod.utils.reference.*;
 
 
-public class SkavenEntity extends HostileEntity implements RangedAttackMob {
+public class SkavenEntity extends PatrolEntity implements SkavenRangedUser {
 
     /**
-     * Goals
+     * Goals changed to a brain entity as bowgoal made it fall through the ground
      */
-    private final RangedSkavenAttackGoal<SkavenEntity> bowGoal = new RangedSkavenAttackGoal<>(this, 1.0D, 20, 15.0F);
+    private final SkavenRangedAttackGoal<SkavenEntity> bowGoal = new SkavenRangedAttackGoal<>(this, 1.0D, 20,15);
     private final ProjectileAttackGoal aiRangedPotion = new ProjectileAttackGoal(this,1,55,10F);
     private final MeleeAttackGoal meleeGoal = new MeleeAttackGoal(this, 1.2D, false) {
         public void stop() {
@@ -76,6 +87,14 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
         }
     };
 
+    public int getFirerate(){
+        int i=1;
+        if (this.getWorld().getDifficulty() != Difficulty.HARD) {
+            i *= 1.5;
+        }
+       return firerate.get(getSkavenTypePosition())*i;
+    }
+
     public void reassessWeaponGoal() {
         if (this.getWorld() != null && !this.getWorld().isClient) {
             this.goalSelector.remove(this.meleeGoal);
@@ -87,13 +106,12 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
                 if (this.getWorld().getDifficulty() != Difficulty.HARD) {
                     i *= 1.5;
                 }
-
-                this.bowGoal.setMinAttackInterval(i);
+                this.bowGoal.setAttackInterval(i);
                 this.goalSelector.add(4, this.bowGoal);
+
             } else if(getSkaventype().equals(globadier)){
                 this.goalSelector.add(4,aiRangedPotion);
             }
-
             else{
                 this.goalSelector.add(4, this.meleeGoal);
             }
@@ -101,29 +119,33 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
         }
     }
 
+    @Override
     protected void initGoals() {
-
+        super.initGoals();
         this.goalSelector.add(0, new SwimGoal(this));
-        this.goalSelector.add(3, new FleeEntityGoal<>(this, CatEntity.class, 6.0F, 1.0D, 1.2D));
+        //this.goalSelector.add(3, new CrossbowAttackGoal<PillagerEntity>(this, 1.0, 8.0f));
+        //this.goalSelector.add(4, new MeleeAttackGoal(this, 1.0, false));
+        this.goalSelector.add(8, new WanderAroundGoal(this, 0.6));
+        this.goalSelector.add(9, new LookAtEntityGoal(this, PlayerEntity.class, 15.0f, 1.0f));
+        this.goalSelector.add(10, new LookAtEntityGoal(this, MobEntity.class, 15.0f));
         this.targetSelector.add(1, new RevengeGoal(this, SkavenEntity.class).setGroupRevenge());
         this.targetSelector.add(2, new ActiveTargetGoal<>(this, PlayerEntity.class, true));
-        this.targetSelector.add(3, new ActiveTargetGoal<>(this, IronGolemEntity.class, true));
         this.targetSelector.add(3, new ActiveTargetGoal<>(this, MerchantEntity.class, false));
-        this.goalSelector.add(6, new LookAtEntityGoal(this, PlayerEntity.class, 8.0F));
-        this.goalSelector.add(6, new LookAroundGoal(this));
-        this.goalSelector.add(8, new WanderAroundGoal(this, 0.6D));
-
+        this.targetSelector.add(3, new ActiveTargetGoal<>(this, IronGolemEntity.class, true));
     }
+
     /**
      * handle all of skaventypes
      *
      */
-    public static final TrackedData<String> SkavenType = DataTracker.<String>registerData(SkavenEntity.class, TrackedDataHandlerRegistry.STRING);
-    private static ArrayList<String> Types = new ArrayList<String>(Arrays.asList(slave,clanrat,stormvermin,gutter_runner,globadier,ratling_gunner));
-    private ArrayList<Float> SkavenSize = new ArrayList<Float>(Arrays.asList(1F,(1.7F/1.6F),(1.8F/1.6F),(1.7F/1.6F),(1.7F/1.6F),(1.7F/1.6F)));
-    private ArrayList<Integer> Spawnchance = new ArrayList<Integer>(Arrays.asList(38,27,15,7,4,4));//3
-    private ArrayList<Float> reinforcementchance = new ArrayList<Float>(Arrays.asList(0.08F,0.1F,0.14F,0F,0.08F,0.11F));
-    private ArrayList<Integer> firerate = new ArrayList<Integer>(Arrays.asList(28,38,0,0,55,6));
+    public static final TrackedData<String> SkavenType = DataTracker.registerData(SkavenEntity.class, TrackedDataHandlerRegistry.STRING);
+    private static final TrackedData<Boolean> CHARGING = DataTracker.registerData(SkavenEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+
+    private static final ArrayList<String> Types = new ArrayList<String>(Arrays.asList(slave,clanrat,stormvermin,gutter_runner,globadier,ratling_gunner));
+    private final ArrayList<Float> SkavenSize = new ArrayList<Float>(Arrays.asList(1F,(1.7F/1.6F),(1.8F/1.6F),(1.7F/1.6F),(1.7F/1.6F),(1.7F/1.6F)));
+    private final ArrayList<Integer> Spawnchance = new ArrayList<Integer>(Arrays.asList(30,500,10,5,3,3));//3
+    private final ArrayList<Float> reinforcementchance = new ArrayList<Float>(Arrays.asList(0.08F,0.1F,0.14F,0F,0.08F,0.11F));
+    private final ArrayList<Integer> firerate = new ArrayList<Integer>(Arrays.asList(28,38,0,0,55,6));
     public static ItemStack[][][] SkavenEquipment =  {{{functions.getRandomspear(4)},{new ItemStack(ItemsInit.Sling)}},
             {{functions.getRandomsword(4),new ItemStack(ItemsInit.Skaven_shield)},{new ItemStack(ItemsInit.Warplock_jezzail)}},
             {{functions.getRandomHalberd(4)},{functions.getRandomsword(5),new ItemStack(ItemsInit.Skaven_shield)}},
@@ -185,14 +207,11 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
     /**
      * initializing
      */
-    @Deprecated
-    protected void initData() {
-        this.getDataTracker().set(SkavenType, Types.get(0));
-    }
     @Override
     protected void initDataTracker(DataTracker.Builder builder) {
         super.initDataTracker(builder);
         builder.add(SkavenType, Types.get(0));
+        builder.add(CHARGING,false);
     }
 
     private boolean fixgame; //skaven task dont work without was for 1.15 to test if still necessary
@@ -205,13 +224,12 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
     }
     @Nullable
     public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficultyIn, SpawnReason reason, @Nullable EntityData spawnDataIn) {
-        spawnDataIn = super.initialize(world, difficultyIn, reason, spawnDataIn);
         setSkavenType(getrandomtype());
         this.initEquipment(difficultyIn);
         this.updateEnchantments(world,random,difficultyIn);
         this.reassessWeaponGoal();
         this.handleAttributes();
-        return spawnDataIn;
+        return super.initialize(world, difficultyIn, reason, spawnDataIn);
     }
 
 /*
@@ -305,7 +323,9 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
 
     }
     private void attackEntitywithrifle(LivingEntity target, int damage, float inaccuracy,ItemStack stack){
+        System.out.println("firing");
         WarpBulletEntity bullet = new WarpBulletEntity(this,this.getWorld(),damage,stack);
+        bullet.setPosition(this.getX(), this.getY()-0.1f, this.getZ());
         int j = ModEnchantmentHelper.getLevel(getWorld(),stack,Enchantments.POWER);
         if (j > 0) {
             bullet.setpowerDamage(j);
@@ -314,15 +334,29 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
         if (k > 0) {
             bullet.setknockbacklevel(k);
         }
+        bullet.setPosition(this.getX(), this.getEyeY()-0.1f, this.getZ());
+        bullet.setOwner(this);
         double d0 = target.getX()  - this.getX();
         double d1 = target.getBodyY(0.3333333333333333D) - bullet.getY();
         double d2 = target.getZ() - this.getZ();
         double d3 = (double) Math.sqrt(d0 * d0 + d2 * d2);
         bullet.setVelocity(d0,d1+d3*0.06,d2,3,(float)(inaccuracy - this.getWorld().getDifficulty().getId() * 4));//inac14
+        if(this.getWorld().isClient) {
+            for (int l = 0; l < 40; ++l) {
+                int i = 65280;
+                double v = (double) (0) / 255.0D;
+                double v1 = (double) (i >> 8 & 255) / 255.0D;
+                double v2 = (double) (0) / 255.0D;
+                float width = 1.5F;
+                float height = 1.5F;
+                this.getWorld().addParticle(EntityEffectParticleEffect.create(ParticleTypes.ENTITY_EFFECT, i), this.getX() + this.getRotationVector().x * 2 + (double) (this.random.nextFloat() * width * 2) - (double) width, this.getY() + 0.4 + (double) (this.random.nextFloat() * height), this.getZ() + this.getRotationVector().z * 2 + (double) (this.random.nextFloat() * width * 2) - (double) width, 0, 0, 0);
+            }
+        }
         this.playSound(SoundEvents.ENTITY_GENERIC_EXPLODE.value(), 1.0F, 2F / (random.nextFloat() * 0.4F + 1.2F) + 0.5F);
         this.getWorld().spawnEntity(bullet);
 
     }
+
     private void attackEntitywithstone(LivingEntity target, float inaccuracy,ItemStack stack){
         StoneEntity stone = new StoneEntity(this,getWorld(),3,stack);
 
@@ -510,5 +544,15 @@ public class SkavenEntity extends HostileEntity implements RangedAttackMob {
         else if(getSkaventype().equals(globadier)){
             attackpotions(target);
         }
+    }
+
+    @Override
+    public void setCharging(boolean charging) {
+        this.dataTracker.set(CHARGING, charging);
+    }
+
+    @Override
+    public void postShoot() {
+        this.despawnCounter = 0;
     }
 }

@@ -32,7 +32,6 @@ public class StopPanickingTaskDwarf {
             }//else if(cannotReachTarget(entity,context.getOptionalValue(timecannotreach))){entity.getBrain().forget(MemoryModuleType.ATTACK_TARGET);//doesnt work properly needs to keep target in mind}
             else if(!entity.getBrain().getOptionalMemory(MemoryModuleType.ATTACK_TARGET).isPresent() && context.getOptionalValue(hurtByEntity).isPresent()){
                 entity.getBrain().remember(MemoryModuleType.ATTACK_TARGET,context.getOptionalValue(hurtByEntity).get());
-                System.out.println(entity.getBrain().getOptionalMemory(MemoryModuleType.ATTACK_TARGET));
             } else if(!entity.getBrain().getOptionalMemory(MemoryModuleType.ATTACK_TARGET).isPresent() && context.getOptionalValue(nearestHostile).isPresent()) {
                 entity.getBrain().remember(MemoryModuleType.ATTACK_TARGET,context.getOptionalValue(nearestHostile).get());
             }

@@ -17,7 +17,14 @@ public class mainInit implements ModInitializer {
      * -enchantements ok?
      * modelaction of items ok?
      * rotation of models: to fix as currently it applies to all, see how to change that. ok-ish does not translate outside the clientplayer view.
-     * loading time for weapons
+     * loading time for weapons ok
+     * model 2d in inventory for items ok
+     * pegasus breeding fix
+     * rats sounds
+     * rats shooting code and visuals
+     * rats AI forget to use weapon after reload
+     * rats falling through the ground ok?
+     * jezzail zoom in when shooting (only lens view for now)
      */
     @Override
     public void onInitialize() {
