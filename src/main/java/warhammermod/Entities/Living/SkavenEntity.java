@@ -339,7 +339,7 @@ public class SkavenEntity extends PatrolEntity implements SkavenRangedUser {
         double d0 = target.getX()  - this.getX();
         double d1 = target.getBodyY(0.3333333333333333D) - bullet.getY();
         double d2 = target.getZ() - this.getZ();
-        double d3 = (double) Math.sqrt(d0 * d0 + d2 * d2);
+        double d3 = Math.sqrt(d0 * d0 + d2 * d2);
         bullet.setVelocity(d0,d1+d3*0.06,d2,3,(float)(inaccuracy - this.getWorld().getDifficulty().getId() * 4));//inac14
         if(this.getWorld().isClient) {
             for (int l = 0; l < 40; ++l) {
@@ -481,6 +481,7 @@ public class SkavenEntity extends PatrolEntity implements SkavenRangedUser {
     public void readCustomDataFromNbt(NbtCompound compound) {
         super.readCustomDataFromNbt(compound);
         setSkavenType(compound.getString("SkavenType"));
+        this.reassessWeaponGoal();
     }
 
     public void onTrackedDataSet(TrackedData<?> key) {

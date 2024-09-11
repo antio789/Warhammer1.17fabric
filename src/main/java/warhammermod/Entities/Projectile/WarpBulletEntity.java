@@ -62,9 +62,9 @@ public class WarpBulletEntity extends ProjectileBase {
     private void spawnColoredParticles()
     {
         int i = 65280;
-            double d0 = (double)(i >> 16 & 255) / 255.0D;
+            double d0 = (double)(0) / 255.0D;
             double d1 = (double)(i >> 8 & 255) / 255.0D;
-            double d2 = (double)(i & 255) / 255.0D;
+            double d2 = (double)(0) / 255.0D;
 
             for (int j = 0; j < 5; ++j)
             {

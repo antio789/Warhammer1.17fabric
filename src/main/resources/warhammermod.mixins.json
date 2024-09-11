@@ -15,7 +15,8 @@
     "gunreload",
     "ItemRendererAccessor",
     "ItemRendererMixin",
-    "ModelLoaderMixin"
+    "ModelLoaderMixin",
+    "FOV_Capture"
   ],
   "injectors": {
     "defaultRequire": 1

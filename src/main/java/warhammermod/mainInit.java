@@ -22,9 +22,10 @@ public class mainInit implements ModInitializer {
      * pegasus breeding fix
      * rats sounds
      * rats shooting code and visuals
-     * rats AI forget to use weapon after reload
-     * rats falling through the ground ok?
-     * jezzail zoom in when shooting (only lens view for now)
+     * rats AI forget to use weapon after reload ok
+     * rats falling through the ground ok
+     * jezzail zoom in when shooting ok
+     * color of warpbullet (WitchFactory use this)
      */
     @Override
     public void onInitialize() {
