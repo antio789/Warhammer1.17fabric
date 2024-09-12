@@ -76,7 +76,6 @@ public abstract class ProjectileBase extends PersistentProjectileEntity {
             if (i > 0) {
                 this.setcustomPierceLevel((byte) i);
             }
-
             EnchantmentHelper.onProjectileSpawned(serverWorld, weapon, this, item -> this.weapon = null);
         }
         projectiledamage = damageIn;
@@ -172,6 +171,7 @@ public abstract class ProjectileBase extends PersistentProjectileEntity {
                 this.remove(RemovalReason.DISCARDED);
             }
         }
+        this.remove(RemovalReason.DISCARDED);
 
     }
 

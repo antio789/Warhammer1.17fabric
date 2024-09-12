@@ -5,11 +5,13 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.client.item.ModelPredicateProviderRegistry;
 import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.particle.SpellParticle;
 import net.minecraft.client.render.entity.FlyingItemEntityRenderer;
 import net.minecraft.client.render.entity.model.EntityModelLayer;
 import net.minecraft.client.util.InputUtil;
@@ -33,6 +35,7 @@ import warhammermod.Client.Render.Item.RenderRatlingGun;
 import warhammermod.Client.Render.Item.RenderRepeater;
 import warhammermod.Client.Render.Item.RenderShield;
 import warhammermod.Client.Render.Item.RenderSling;
+import warhammermod.Client.particles.warpparticle;
 import warhammermod.Items.Ammocomponent;
 import warhammermod.Items.GunBase;
 import warhammermod.utils.ItemFiringPayload;
@@ -45,6 +48,22 @@ import static warhammermod.utils.Registry.ItemsInit.netherite_halberd;
 
 @Environment(EnvType.CLIENT)
 public class Clientside implements ClientModInitializer {
+
+    @Override
+    public void onInitializeClient(){
+
+        registerkeys();
+        registerRenderer();
+        registerModelLayer();
+        registerModelPredicates();
+
+        ParticleFactoryRegistry.getInstance().register(WHRegistry.WARP, warpparticle.InstantFactory::new);
+
+        ClientPlayNetworking.registerGlobalReceiver(ItemFiringPayload.ID, (payload, context) -> {
+            context.client().execute(() -> RenderRepeater.ItemstackFired(payload.stack()));
+        });
+    }
+
     public static final Identifier PacketID = Identifier.of(reference.modid, "spawn_packet");
     public static KeyBinding pegasus_down;
     public static KeyBinding Wiki_Map;
@@ -87,18 +106,7 @@ public class Clientside implements ClientModInitializer {
     private static Identifier location(String string){
         return Identifier.of(reference.modid,string);
     }
-    @Override
-    public void onInitializeClient(){
 
-        registerkeys();
-        registerRenderer();
-        registerModelLayer();
-        registerModelPredicates();
-
-        ClientPlayNetworking.registerGlobalReceiver(ItemFiringPayload.ID, (payload, context) -> {
-           context.client().execute(() -> RenderRepeater.ItemstackFired(payload.stack()));
-        });
-    }
 
     public void registerkeys(){
         pegasus_down = KeyBindingHelper.registerKeyBinding(new KeyBinding("key"+reference.modid+"pegasusdown",

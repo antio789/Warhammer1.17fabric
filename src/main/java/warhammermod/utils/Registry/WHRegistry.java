@@ -4,6 +4,7 @@ package warhammermod.utils.Registry;
 import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
 import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
+import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
 import net.minecraft.component.ComponentType;
 import net.minecraft.entity.SpawnLocationTypes;
 import net.minecraft.entity.SpawnRestriction;
@@ -11,6 +12,7 @@ import net.minecraft.entity.ai.brain.sensor.SensorType;
 import net.minecraft.entity.passive.GoatEntity;
 import net.minecraft.entity.passive.HorseEntity;
 import net.minecraft.loot.LootTable;
+import net.minecraft.particle.SimpleParticleType;
 import net.minecraft.registry.*;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.structure.processor.StructureProcessorList;
@@ -34,12 +36,18 @@ public class WHRegistry {
     public static final ComponentType<Ammocomponent> AMMO= ComponentType.<Ammocomponent>builder().codec(Ammocomponent.CODEC).packetCodec(Ammocomponent.PACKET_CODEC).build();
     public static final ComponentType<firecomponent> Fireorder= ComponentType.<firecomponent>builder().codec(firecomponent.CODEC).packetCodec(firecomponent.PACKET_CODEC).build();
 
+    public static final SimpleParticleType WARP = FabricParticleTypes.simple();
+
     public static void initialize() {
         registercomponents();
         registersounds();
         registersensors();
         registerattributes();
         registerprofessions();
+        registerparticles();
+    }
+    public static void registerparticles(){
+        Registry.register(Registries.PARTICLE_TYPE, Identifier.of(reference.modid,"warp_particle"),WARP);
     }
 
     public static void registercomponents(){

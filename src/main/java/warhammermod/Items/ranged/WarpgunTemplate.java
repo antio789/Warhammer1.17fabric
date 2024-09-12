@@ -15,6 +15,7 @@ import warhammermod.Entities.Projectile.WarpBulletEntity;
 import warhammermod.Items.GunBase;
 import warhammermod.Items.IReloadItem;
 import warhammermod.utils.ModEnchantmentHelper;
+import warhammermod.utils.Registry.WHRegistry;
 
 public class WarpgunTemplate extends GunBase implements IReloadItem {
     float damage;
@@ -26,19 +27,15 @@ public class WarpgunTemplate extends GunBase implements IReloadItem {
 
     public void fire(PlayerEntity player, World world, ItemStack stack) {
         if(world.isClient()) {
-            for (int k = 0; k < 40; ++k) {
-                int i = 65280;
-                double d0 = (double)(i >> 16 & 255) / 255.0D;
-                double d1 = (double)(i >> 8 & 255) / 255.0D;
-                double d2 = (double)(i & 255) / 255.0D;
-                world.addParticle(EntityEffectParticleEffect.create(ParticleTypes.ENTITY_EFFECT,i), player.getX() + player.getRotationVector().x * 2 + (double) (this.rand.nextFloat() * this.width * 2) - (double) this.width, player.getY() + 0.4 + (double) (this.rand.nextFloat() * this.height), player.getZ() + player.getRotationVector().z * 2 + (double) (this.rand.nextFloat() * this.width * 2) - (double) this.width, d0, d1, d2);
+            for (int k = 0; k < 25; ++k) {
+                world.addParticle(WHRegistry.WARP, player.getX() + player.getRotationVector().x * 2 + (double) (this.rand.nextFloat() * this.width*1.5) - (double) this.width, player.getY() + 0.4 + (double) (this.rand.nextFloat() * this.height), player.getZ() + player.getRotationVector().z * 2 + (double) (this.rand.nextFloat() * this.width*1.5) - (double) this.width, 0, 0, 0);
             }
         }
         if(!world.isClient()) {
             world.playSound(null,player.getX(),player.getY(),player.getZ(), SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS,1F,1.35F/(rand.nextFloat()*0.4F+1.2F)+0.5F);
             WarpBulletEntity bullet = new WarpBulletEntity(player,world, damage,stack,findAmmo(player));
             bullet.setPosition(player.getX(), player.getEyeY() - 0.26, player.getZ());
-            bullet.setVelocity(player,player.getPitch(), player.getYaw(), 0, 3.5F, 0.3F);
+            bullet.setVelocity(player,player.getPitch(), player.getYaw(), 1, 3.5F, 0.3F);
 
             int i = ModEnchantmentHelper.getLevel(world,stack, Enchantments.POWER);
             if (i > 0) {

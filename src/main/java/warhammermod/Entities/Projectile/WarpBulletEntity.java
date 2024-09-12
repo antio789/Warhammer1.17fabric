@@ -7,9 +7,12 @@ import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.world.World;
 import warhammermod.utils.Registry.Entityinit;
 import warhammermod.utils.Registry.ItemsInit;
+import warhammermod.utils.Registry.WHRegistry;
 
 public class WarpBulletEntity extends ProjectileBase {
 
@@ -36,14 +39,17 @@ public class WarpBulletEntity extends ProjectileBase {
 
 
 
+    int delayedtick = 3;
     public void tick()
     {
         super.tick();
 
-        if (this.getWorld().isClient() && !this.inGround)
+        if (delayedtick<=0 && this.getWorld().isClient() && !this.inGround)
         {
+            delayedtick=3;
             spawnColoredParticles();
         }
+        delayedtick--;
     }
 
     @Override
@@ -68,7 +74,7 @@ public class WarpBulletEntity extends ProjectileBase {
 
             for (int j = 0; j < 5; ++j)
             {
-                this.getWorld().addParticle(ParticleTypes.EFFECT, this.getX() + (this.random.nextDouble() - 0.5D) * (double)this.getWidth(), this.getY() +this.random.nextDouble()*(double)this.getHeight(), this.getZ() + (this.random.nextDouble() - 0.5D) * (double)this.getWidth(), d0, d1, d2);
+                this.getWorld().addParticle(WHRegistry.WARP, this.getX() + (this.random.nextDouble() - 0.5D) * (double)this.getWidth(), this.getY() +this.random.nextDouble()*(double)this.getHeight(), this.getZ() + (this.random.nextDouble() - 0.5D) * (double)this.getWidth(), d0, d1, d2);
             }
     }
 

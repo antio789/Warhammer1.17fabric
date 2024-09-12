@@ -77,7 +77,7 @@ import warhammermod.utils.Registry.WHRegistry;
 import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
-//fix villagerdata.
+
 public class DwarfEntity extends MerchantEntity
         implements InteractionObserver {
     private static final Logger LOGGER = LogUtils.getLogger();

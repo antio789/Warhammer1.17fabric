@@ -25,7 +25,7 @@ public class mainInit implements ModInitializer {
      * rats AI forget to use weapon after reload ok
      * rats falling through the ground ok
      * jezzail zoom in when shooting ok
-     * color of warpbullet (WitchFactory use this)
+     * smoke of warpbullet (WitchFactory use this) ok
      */
     @Override
     public void onInitialize() {
