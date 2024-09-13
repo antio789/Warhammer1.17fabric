@@ -1,7 +1,5 @@
 package warhammermod.utils.Registry;
 
-import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
-import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.item.Item;
@@ -27,7 +25,7 @@ public class Entityinit {
     public static EntityType<WarpBulletEntity> WarpBullet;
 
 
-    public static EntityType<PegasusEntity> Pegasus;
+    public static EntityType<PegasusEntity> PEGASUS;
     public static Item Pegasus_SPAWN_EGG;
 
     public static EntityType<SkavenEntity> SKAVEN;
@@ -37,11 +35,11 @@ public class Entityinit {
     public static Item DWARF_SPAWN_EGG;
 
     public static void initializeEntities(){
-        Pegasus = Registry.register(Registries.ENTITY_TYPE,
+        PEGASUS = Registry.register(Registries.ENTITY_TYPE,
                 Identifier.of(reference.modid,"pegasus"),
                 EntityType.Builder.create(PegasusEntity::new, SpawnGroup.CREATURE).dimensions(1.3964844F, 1.6F).maxTrackingRange(10).build()
         );
-        Registry.register(Registries.ITEM, Identifier.of(reference.modid, "pegasus_egg"), Pegasus_SPAWN_EGG = new SpawnEggItem(Pegasus, 15528173,15395562,new Item.Settings()));
+        Registry.register(Registries.ITEM, Identifier.of(reference.modid, "pegasus_egg"), Pegasus_SPAWN_EGG = new SpawnEggItem(PEGASUS, 15528173,15395562,new Item.Settings()));
         SKAVEN = Registry.register(Registries.ENTITY_TYPE,
                 Identifier.of(reference.modid,"skaven"),
                 EntityType.Builder.create(SkavenEntity::new, SpawnGroup.MONSTER).dimensions(0.6F, 1.6F).spawnableFarFromPlayer().maxTrackingRange(8).build()

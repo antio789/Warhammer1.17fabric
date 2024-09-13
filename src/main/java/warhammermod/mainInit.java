@@ -13,19 +13,34 @@ import warhammermod.utils.reference;
 
 public class mainInit implements ModInitializer {
     /**
-     * to do:
-     * -enchantements ok?
-     * modelaction of items ok?
+     * DONE
+     *
+     * -enchantements
+     * modelaction of items
      * rotation of models: to fix as currently it applies to all, see how to change that. ok-ish does not translate outside the clientplayer view.
-     * loading time for weapons ok
-     * model 2d in inventory for items ok
+     * loading time for weapons
+     * model 2d in inventory for items
+     * rats AI forget to use weapon after reload
+     * rats falling through the ground
+     * jezzail zoom in when shooting
+     * smoke of warpbullet (WitchFactory use this)
+     *rats jezzail, ratling gun, sling, shooting code and visuals
+     *
+     * TO DO
+     *
+     * mobs spawning
      * pegasus breeding fix
+     * lights and street revamp of dwarf village
+     *
+     * IMPROVEMENTS
+     *
+     * ratling gun reload (update rifleattack to use weapon ammo);
      * rats sounds
-     * rats shooting code and visuals
-     * rats AI forget to use weapon after reload ok
-     * rats falling through the ground ok
-     * jezzail zoom in when shooting ok
-     * smoke of warpbullet (WitchFactory use this) ok
+     * crafting system weapons
+     * castle town for imperial weapons
+     * companions
+     * smoke when rats fire(put as improvement as it requires sending a packet)
+     * dwarfs with rifles(require raycasting to avoid friendly fire)
      */
     @Override
     public void onInitialize() {

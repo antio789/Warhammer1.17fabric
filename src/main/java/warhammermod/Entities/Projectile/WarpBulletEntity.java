@@ -39,7 +39,7 @@ public class WarpBulletEntity extends ProjectileBase {
 
 
 
-    int delayedtick = 3;
+    int delayedtick = 0;
     public void tick()
     {
         super.tick();

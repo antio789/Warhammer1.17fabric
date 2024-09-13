@@ -20,6 +20,8 @@ import net.minecraft.resource.SynchronousResourceReloader;
 import net.minecraft.util.Identifier;
 import warhammermod.Client.Clientside;
 import warhammermod.Client.Render.Item.Model.RatlingGunModel;
+import warhammermod.Items.firecomponent;
+import warhammermod.utils.Registry.WHRegistry;
 import warhammermod.utils.reference;
 
 
@@ -52,10 +54,8 @@ public class RenderRatlingGun implements BuiltinItemRendererRegistry.DynamicItem
     public void render(ItemStack stack, ModelTransformationMode mode, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay) {
         matrices.push();
         matrices.scale(1.0F, -1.0F, -1.0F);
-        if(clientplayer!=null && clientplayer.getActiveItem()!=null && clientplayer.getActiveItem().equals(stack)){
-            this.model.cannonback.roll=rotation+=50;
-            clientplayer=null;
-        }
+        this.model.cannonback.roll=50*stack.getOrDefault(WHRegistry.Fireorder, firecomponent.DEFAULT).firecount();
+
 
         VertexConsumer ivertexbuilder1 = ItemRenderer.getDirectItemGlintConsumer(vertexConsumers, this.model.getLayer(TEXTURE), false, stack.hasGlint());
         this.model.render(matrices,ivertexbuilder1,light, OverlayTexture.DEFAULT_UV);

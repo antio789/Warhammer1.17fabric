@@ -3,33 +3,23 @@
  */
 package warhammermod.Entities.Living.AImanager;
 
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ChargedProjectilesComponent;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.entity.CrossbowUser;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.RangedAttackMob;
 import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.projectile.ProjectileUtil;
-import net.minecraft.item.CrossbowItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TimeHelper;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.intprovider.UniformIntProvider;
 import warhammermod.Entities.Living.SkavenEntity;
+import warhammermod.Items.Ammocomponent;
 import warhammermod.Items.ranged.RatlingGun;
 import warhammermod.Items.ranged.SlingTemplate;
 import warhammermod.Items.ranged.WarpgunTemplate;
+import warhammermod.utils.Registry.WHRegistry;
 import warhammermod.utils.reference;
 
 import java.util.EnumSet;
 
-public class SkavenAttackGoal<T extends SkavenEntity & SkavenRangedUser>
+public class RifleAttackGoal<T extends SkavenEntity & SkavenRangedUser>
 extends Goal {
     public static final UniformIntProvider COOLDOWN_RANGE = TimeHelper.betweenSeconds(1, 2);
     private final T actor;
@@ -40,7 +30,7 @@ extends Goal {
     private int chargedTicksLeft;
     private int cooldown;
 
-    public SkavenAttackGoal(T actor, double speed, float range) {
+    public RifleAttackGoal(T actor, double speed, float range) {
         this.actor = actor;
         this.speed = speed;
         this.squaredRange = range * range;
@@ -94,22 +84,22 @@ extends Goal {
         if (livingEntity == null) {
             return;
         }
-        boolean bl = this.actor.getVisibilityCache().canSee(livingEntity);
-        boolean bl4 = bl2 = this.seeingTargetTicker > 0;
-        if (bl != bl2) {
+        boolean cansee = this.actor.getVisibilityCache().canSee(livingEntity);
+        bl2 = this.seeingTargetTicker > 0;
+        if (cansee != bl2) {
             this.seeingTargetTicker = 0;
         }
-        if (bl) {
+        if (cansee) {
             ++this.seeingTargetTicker;
         } else {
             --this.seeingTargetTicker;
         }
         double d = this.actor.squaredDistanceTo(livingEntity);
-        boolean bl5 = bl3 = (d > (double)this.squaredRange || this.seeingTargetTicker < 5) && this.chargedTicksLeft == 0;
+         bl3 = (d > (double)this.squaredRange || this.seeingTargetTicker < 5) && this.chargedTicksLeft == 0;
         if (bl3) {
             --this.cooldown;
             if (this.cooldown <= 0) {
-                ((MobEntity)this.actor).getNavigation().startMovingTo(livingEntity, this.isUncharged() ? this.speed : this.speed * 0.5);
+                this.actor.getNavigation().startMovingTo(livingEntity, this.isUncharged() ? this.speed : this.speed * 0.5);
                 this.cooldown = COOLDOWN_RANGE.get(this.actor.getRandom());
             }
         } else {
@@ -124,25 +114,26 @@ extends Goal {
                 this.actor.setCharging(true);
             }
         } else if (this.stage == Stage.CHARGING) {
-            ItemStack itemStack;
-            int i;
             if (!this.actor.isUsingItem()) {
                 this.stage = Stage.UNCHARGED;
             }
-            if ((i = this.actor.getItemUseTime()) >= getPullTime(this.actor)) {
+            if (this.actor.getItemUseTime() >= getPullTime(this.actor)) {
                 this.actor.stopUsingItem();
                 this.stage = Stage.CHARGED;
                 this.chargedTicksLeft = 20 + this.actor.getRandom().nextInt(20);
                 this.actor.setCharging(false);
+                this.actor.getMainHandStack().set(WHRegistry.AMMO,new Ammocomponent(1,1));
             }
         } else if (this.stage == Stage.CHARGED) {
             --this.chargedTicksLeft;
             if (this.chargedTicksLeft == 0) {
                 this.stage = Stage.READY_TO_ATTACK;
-            }
-        } else if (this.stage == Stage.READY_TO_ATTACK && bl) {
+            }else actor.setAiming(true);
+        } else if (this.stage == Stage.READY_TO_ATTACK && cansee) {
             this.actor.shootAt(livingEntity, 1.0f);
+            this.actor.getMainHandStack().set(WHRegistry.AMMO,new Ammocomponent(0,0));
             this.stage = Stage.UNCHARGED;
+            this.actor.setAiming(false);
         }
     }
 

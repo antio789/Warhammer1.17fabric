@@ -44,7 +44,9 @@ public class RatlingGun extends AutogunBase { //BOW enchantements
 
         else if(world.isClient()){
             RenderRatlingGun.playerfired(player);
-            stack.set(WHRegistry.Fireorder,new firecomponent(stack.getOrDefault(WHRegistry.Fireorder,firecomponent.DEFAULT).firecount()+1));
+            int i=stack.getOrDefault(WHRegistry.Fireorder,firecomponent.DEFAULT).firecount();
+            if(i>6)i=0;
+            stack.set(WHRegistry.Fireorder,new firecomponent(i+1));
             for (int k = 0; k < 15; ++k) {
                 world.addParticle(WHRegistry.WARP, player.getX() + player.getRotationVector().x * 2 + (double) (this.rand.nextFloat() * this.width) - (double) this.width, player.getY() + 0.4 + (double) (this.rand.nextFloat() * this.height), player.getZ() + player.getRotationVector().z * 2 + (double) (this.rand.nextFloat() * this.width) - (double) this.width, 0, 0, 0);
             }
@@ -54,6 +56,7 @@ public class RatlingGun extends AutogunBase { //BOW enchantements
 
     public void onStoppedUsing(ItemStack stack, World worldIn, LivingEntity entityLiving, int timeLeft) {//implement infinity if possible
         stack.set(WHRegistry.Fireorder,new firecomponent(firecomponent.DEFAULT.firecount()));
+        super.onStoppedUsing(stack, worldIn, entityLiving, timeLeft);
     }
 
         public void PlayaSound(World world, PlayerEntity player){

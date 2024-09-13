@@ -8,8 +8,7 @@
 
   ],
   "server": [
-
-
+    "Serverworld_injection"
   ],
   "client": [
     "gunreload",

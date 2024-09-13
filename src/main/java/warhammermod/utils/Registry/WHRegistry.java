@@ -29,6 +29,8 @@ import warhammermod.Items.Ammocomponent;
 import warhammermod.Items.firecomponent;
 import warhammermod.mixin.accesssensor;
 import warhammermod.utils.reference;
+import warhammermod.world.EntitySpawning;
+
 public class WHRegistry {
 
     public static final RegistryKey<LootTable> HERO_OF_THE_VILLAGE_LORD_GIFT_GAMEPLAY;
@@ -45,6 +47,8 @@ public class WHRegistry {
         registerattributes();
         registerprofessions();
         registerparticles();
+        EntitySpawning.SpawnRestriction();
+        EntitySpawning.addSpawn();
     }
     public static void registerparticles(){
         Registry.register(Registries.PARTICLE_TYPE, Identifier.of(reference.modid,"warp_particle"),WARP);
@@ -56,14 +60,14 @@ public class WHRegistry {
     }
 
     public static void registerattributes(){
-        FabricDefaultAttributeRegistry.register(Entityinit.Pegasus, HorseEntity.createBaseHorseAttributes());
+        FabricDefaultAttributeRegistry.register(Entityinit.PEGASUS, HorseEntity.createBaseHorseAttributes());
         FabricDefaultAttributeRegistry.register(Entityinit.SKAVEN, SkavenEntity.createHostileAttributes());
         FabricDefaultAttributeRegistry.register(Entityinit.DWARF, EntityAttributes.registerDwarfTypesattributes());
     }
 
     public static void spawnrestrictions(){
         SpawnRestriction.register(Entityinit.SKAVEN, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES,SkavenEntity::canSpawn);
-        SpawnRestriction.register(Entityinit.Pegasus,SpawnLocationTypes.ON_GROUND,Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, GoatEntity::canSpawn);
+        SpawnRestriction.register(Entityinit.PEGASUS,SpawnLocationTypes.ON_GROUND,Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, GoatEntity::canSpawn);
     }
 
 

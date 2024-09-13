@@ -28,9 +28,9 @@
   "overrides": [
     {
       "predicate": {
-        "powerhit": 1
+        "warhammermod:powerhit": 1
       },
-      "model": "warhammermod:item/gunsecond/diamond_halberd"
+      "model": "warhammermod:item/gunsecond/netherite_halberd"
     }
   ]
 }

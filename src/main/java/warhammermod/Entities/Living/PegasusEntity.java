@@ -128,13 +128,13 @@ public class PegasusEntity extends HorseEntity {
 
         else if (partner instanceof PegasusEntity) {
 
-            pegasus = Entityinit.Pegasus.create(world);
+            pegasus = Entityinit.PEGASUS.create(world);
             ((PegasusEntity) pegasus).setHorseVariant(HorseColor.WHITE, HorseMarking.NONE);
         }
 
         else if (random.nextFloat() < 0.15) {
             HorseEntity mating_partner = (HorseEntity) partner;
-            pegasus = Entityinit.Pegasus.create(world);
+            pegasus = Entityinit.PEGASUS.create(world);
             ((PegasusEntity) pegasus).setMixedblood(true);
 
             int j = this.random.nextInt(9);

@@ -6,7 +6,7 @@ import net.minecraft.entity.mob.MobEntity;
 
 public class EntityAttributes {
     public static DefaultAttributeContainer.Builder registerDwarfTypesattributes(){
-        double speed = 0.43;
+        double speed = 0.4;
         double armor=2;
         double AD=2;
         double followrange = 48;

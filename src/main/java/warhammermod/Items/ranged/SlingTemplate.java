@@ -2,6 +2,7 @@ package warhammermod.Items.ranged;
 
 
 import net.minecraft.enchantment.Enchantments;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BowItem;
@@ -14,23 +15,22 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.world.World;
 import warhammermod.Entities.Projectile.StoneEntity;
+import warhammermod.Items.firecomponent;
 import warhammermod.utils.ModEnchantmentHelper;
+import warhammermod.utils.Registry.WHRegistry;
 
 import java.util.Random;
 
 
 public class SlingTemplate extends BowItem {
-    public float charging;
 
     private final double baseDamage = 1.0D;
 
-    public SlingTemplate(Settings p_i50052_1_) {
-        super(p_i50052_1_);
+    public SlingTemplate(Settings settings) {
+        super(settings.component(WHRegistry.Fireorder, firecomponent.DEFAULT));
     }
 
-    public void usageTick(World world, LivingEntity player, ItemStack stack, int count) {
-        charging = Math.min(1,(getMaxUseTime(stack, player)- count) / 20.0F);
-    }
+
 
 
     public ItemStack findAmmo(PlayerEntity player) {
@@ -68,9 +68,9 @@ public class SlingTemplate extends BowItem {
 
                     if (!world.isClient) {
                         //check damage is coherent with bow, bow base is 2
-                        StoneEntity stone = new StoneEntity(player,world,1.5F,stack,findAmmo(player));
+                        StoneEntity stone = new StoneEntity(player,world,1F,stack,findAmmo(player));
                         stone.setPosition(player.getX(),player.getEyeY()-0.26,player.getZ());
-                        stone.setVelocity(player, player.getPitch(), player.getYaw(), 0.0F, f * 2.75F, 1.0F);
+                        stone.setVelocity(player, player.getPitch(), player.getYaw(), 0.0F, f * 2.5F, 1.0F);
                         if (f == 1.0F) {
                             stone.setCritical(true);
                         }

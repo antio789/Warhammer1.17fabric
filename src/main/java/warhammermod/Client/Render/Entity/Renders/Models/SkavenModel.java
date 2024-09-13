@@ -5,18 +5,18 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.model.*;
 import net.minecraft.client.render.entity.model.BipedEntityModel;
+import net.minecraft.client.render.entity.model.CrossbowPosing;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.ai.RangedAttackMob;
-import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.util.Arm;
 import net.minecraft.util.math.MathHelper;
+import warhammermod.Entities.Living.SkavenEntity;
 
 
 /**
  * Created using Tabula 7.0.1
  */
 @Environment(EnvType.CLIENT)
-public class SkavenModel<T extends MobEntity & RangedAttackMob> extends BipedEntityModel<T> {
+public class SkavenModel<T extends SkavenEntity> extends BipedEntityModel<T> {
     public ModelPart bipedLeftArm;
     public ModelPart bipedRightLeg;
     public ModelPart bipedHead;
@@ -90,11 +90,14 @@ public class SkavenModel<T extends MobEntity & RangedAttackMob> extends BipedEnt
     }
 
 
-
+    public static float pitch = -2;
+    public static float yaw = 0;
     public void setAngles(T entityIn,float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         this.hat.visible=false;
-        if ((entityIn).isAttacking())
-        {
+        SkavenEntity.State state = entityIn.getState();
+        this.bipedHead.yaw = netHeadYaw * 0.017453292F;
+        this.bipedHead.pitch = headPitch * 0.017453292F;
+        if (state.equals(SkavenEntity.State.ATTACKING)) {
             float f = MathHelper.sin(this.handSwingProgress * (float) Math.PI);
             float f1 = MathHelper.sin((1.0F - (1.0F - this.handSwingProgress) * (1.0F - this.handSwingProgress)) * (float) Math.PI);
             this.bipedRightArm.roll = 0.0F;
@@ -109,12 +112,30 @@ public class SkavenModel<T extends MobEntity & RangedAttackMob> extends BipedEnt
             this.bipedLeftArm.roll -= MathHelper.cos(ageInTicks * 0.09F) * 0.05F + 0.05F;
             this.bipedRightArm.pitch += MathHelper.sin(ageInTicks * 0.067F) * 0.05F;
             this.bipedLeftArm.pitch -= MathHelper.sin(ageInTicks * 0.067F) * 0.05F;
-            this.bipedHead.yaw = netHeadYaw * 0.017453292F;
-            this.bipedHead.pitch = headPitch * 0.017453292F;
 
+        }else if(state.equals(SkavenEntity.State.AIMING)){
+            hold(this.bipedRightArm,this.bipedLeftArm,this.bipedHead,!entityIn.isLeftHanded());
+        }else if(state.equals(SkavenEntity.State.GUN_CHARGE)){
+            bipedHead.pitch=0F;
+            bipedHead.yaw=0;
+            bipedRightArm.roll=0F;
+            bipedRightArm.roll += MathHelper.cos(ageInTicks*1.1F)*0.01F;
+            bipedLeftArm.roll=0F;
+            bipedLeftArm.roll -= MathHelper.cos(ageInTicks*1.1F)*0.01F;
+            if(entityIn.getMainArm().equals(Arm.RIGHT)){
+                bipedLeftArm.yaw=0.5F;
+                bipedRightArm.yaw=0F;
+                bipedRightArm.pitch=-0.5F;
+                bipedLeftArm.pitch=-1.5F + MathHelper.cos(ageInTicks*0.8F)*0.05F;
+            }else{
+                bipedRightArm.yaw=-0.5F;
+                bipedLeftArm.yaw=0F;
+                bipedLeftArm.pitch=-0.5F;
+                bipedRightArm.pitch=-1.5F + MathHelper.cos(ageInTicks*0.8F)*0.05F;
+            }
+            bipedHead.pitch += MathHelper.cos(ageInTicks*1.1F)*0.03F;
         }
         else{
-
             bipedHead.pitch=0F;
             bipedHead.yaw=0;
             bipedRightArm.roll=0F;
@@ -126,7 +147,6 @@ public class SkavenModel<T extends MobEntity & RangedAttackMob> extends BipedEnt
             bipedRightArm.pitch=0F;
             bipedLeftArm.pitch=0F;
             bipedHead.pitch += MathHelper.cos(ageInTicks*1.1F)*0.04F;
-
         }
 
 
@@ -156,6 +176,15 @@ public class SkavenModel<T extends MobEntity & RangedAttackMob> extends BipedEnt
         modelPart.pivotX += f;
         modelPart.rotate(poseStack);
         modelPart.pivotX -= f;
+    }
+
+    public static void hold(ModelPart holdingArm, ModelPart otherArm, ModelPart head, boolean rightArmed) {
+        ModelPart modelPart = rightArmed ? holdingArm : otherArm;
+        ModelPart modelPart2 = rightArmed ? otherArm : holdingArm;
+        modelPart.yaw = (rightArmed ? -0.01f : 0.01f) + head.yaw;
+        modelPart2.yaw = (rightArmed ? 0.6f : -0.6f) + head.yaw;
+        modelPart.pitch = -1.5707964f + head.pitch + 0.1f;
+        modelPart2.pitch = -1.5f + head.pitch;
     }
 
 

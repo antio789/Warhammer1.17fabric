@@ -7,7 +7,11 @@ import net.minecraft.client.model.*;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.item.ItemStack;
+import warhammermod.Items.firecomponent;
 import warhammermod.Items.ranged.SlingTemplate;
+import warhammermod.utils.Registry.WHRegistry;
+
 @Environment(EnvType.CLIENT)
 public class SlingModel extends Model {
 
@@ -51,10 +55,11 @@ public class SlingModel extends Model {
         return TexturedModelData.of(meshDefinition, 64, 64);
     }
 
-    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color, SlingTemplate item, Boolean used) {
-        if(used){
+    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color, ItemStack stack) {
+        int usetick = stack.getOrDefault(WHRegistry.Fireorder, firecomponent.DEFAULT).firecount();
+        if(stack.getOrDefault(WHRegistry.Fireorder, firecomponent.DEFAULT).firecount()>0){
             this.Cord2.render(matrices, vertices, light, overlay, color);
-            Cord2.roll+=0.25*item.charging;
+            Cord2.roll+=0.25*((float)usetick /20);
         }
         else{
             this.cord1.render(matrices, vertices, light, overlay, color);

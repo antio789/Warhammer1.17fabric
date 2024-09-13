@@ -1,8 +1,10 @@
 package warhammermod.Client;
 
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
@@ -11,7 +13,6 @@ import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.client.item.ModelPredicateProviderRegistry;
 import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.particle.SpellParticle;
 import net.minecraft.client.render.entity.FlyingItemEntityRenderer;
 import net.minecraft.client.render.entity.model.EntityModelLayer;
 import net.minecraft.client.util.InputUtil;
@@ -20,6 +21,7 @@ import net.minecraft.item.Item;
 import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 import warhammermod.Client.Render.Entity.Renders.DwarfRenderer;
+import warhammermod.Client.Render.Entity.Renders.Layers.SkavenItemInHandLayer;
 import warhammermod.Client.Render.Entity.Renders.Models.DwarfModel;
 import warhammermod.Client.Render.Entity.Renders.Models.Pegasusmodel;
 import warhammermod.Client.Render.Entity.Renders.Models.SkavenModel;
@@ -38,13 +40,16 @@ import warhammermod.Client.Render.Item.RenderSling;
 import warhammermod.Client.particles.warpparticle;
 import warhammermod.Items.Ammocomponent;
 import warhammermod.Items.GunBase;
+import warhammermod.Items.firecomponent;
 import warhammermod.utils.ItemFiringPayload;
 import warhammermod.utils.Registry.Entityinit;
 import warhammermod.utils.Registry.ItemsInit;
 import warhammermod.utils.Registry.WHRegistry;
 import warhammermod.utils.reference;
 
-import static warhammermod.utils.Registry.ItemsInit.netherite_halberd;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
+import static warhammermod.utils.Registry.ItemsInit.*;
 
 @Environment(EnvType.CLIENT)
 public class Clientside implements ClientModInitializer {
@@ -144,7 +149,7 @@ public class Clientside implements ClientModInitializer {
         EntityRendererRegistry.register(Entityinit.Shotentity, ShotRender::new);
         EntityRendererRegistry.register(Entityinit.WarpBullet, WarpbulletRender::new);
 
-        EntityRendererRegistry.register(Entityinit.Pegasus, PegasusRenderer::new);
+        EntityRendererRegistry.register(Entityinit.PEGASUS, PegasusRenderer::new);
         EntityRendererRegistry.register(Entityinit.SKAVEN, SkavenRenderer::new);
         EntityRendererRegistry.register(Entityinit.DWARF, DwarfRenderer::new);
     }
@@ -170,11 +175,70 @@ public class Clientside implements ClientModInitializer {
     }
 
     public void registerModelPredicates(){
-        ModelPredicateProviderRegistry.register(netherite_halberd, Identifier.of(reference.modid,"pull"), (itemStack, clientWorld, livingEntity, seed) -> {
+        ModelPredicateProviderRegistry.register(netherite_halberd, Identifier.of(reference.modid,"powerhit"), (itemStack, clientWorld, livingEntity, seed) -> {
             if (livingEntity == null) {
                 return 0.0F;
             }
             return livingEntity.getActiveItem() != itemStack ? 0.0F : (itemStack.getMaxUseTime(livingEntity) - livingEntity.getItemUseTimeLeft()) / 20.0F;
+        });
+        ModelPredicateProviderRegistry.register(diamond_halberd, Identifier.of(reference.modid,"powerhit"), (itemStack, clientWorld, livingEntity, seed) -> {
+            if (livingEntity == null) {
+                return 0.0F;
+            }
+            return livingEntity.getActiveItem() != itemStack ? 0.0F : (itemStack.getMaxUseTime(livingEntity) - livingEntity.getItemUseTimeLeft()) / 20.0F;
+        });
+        ModelPredicateProviderRegistry.register(gold_halberd, Identifier.of(reference.modid,"powerhit"), (itemStack, clientWorld, livingEntity, seed) -> {
+            if (livingEntity == null) {
+                return 0.0F;
+            }
+            return livingEntity.getActiveItem() != itemStack ? 0.0F : (itemStack.getMaxUseTime(livingEntity) - livingEntity.getItemUseTimeLeft()) / 20.0F;
+        });
+        ModelPredicateProviderRegistry.register(iron_halberd, Identifier.of(reference.modid,"powerhit"), (itemStack, clientWorld, livingEntity, seed) -> {
+            if (livingEntity == null) {
+                return 0.0F;
+            }
+            return livingEntity.getActiveItem() != itemStack ? 0.0F : (itemStack.getMaxUseTime(livingEntity) - livingEntity.getItemUseTimeLeft()) / 20.0F;
+        });
+        ModelPredicateProviderRegistry.register(stone_halberd, Identifier.of(reference.modid,"powerhit"), (itemStack, clientWorld, livingEntity, seed) -> {
+            if (livingEntity == null) {
+                return 0.0F;
+            }
+            return livingEntity.getActiveItem() != itemStack ? 0.0F : (itemStack.getMaxUseTime(livingEntity) - livingEntity.getItemUseTimeLeft()) / 20.0F;
+        });
+        ModelPredicateProviderRegistry.register(wooden_halberd, Identifier.of(reference.modid,"powerhit"), (itemStack, clientWorld, livingEntity, seed) -> {
+            if (livingEntity == null) {
+                return 0.0F;
+            }
+            return livingEntity.getActiveItem() != itemStack ? 0.0F : (itemStack.getMaxUseTime(livingEntity) - livingEntity.getItemUseTimeLeft()) / 20.0F;
+        });
+        ModelPredicateProviderRegistry.register(ItemsInit.Sling, Identifier.ofVanilla((String)"pull"), (stack, world, entity, seed) -> {
+            if (entity == null) {
+                return 0.0f;
+            }
+            if (entity.getActiveItem() != stack) {
+                if(stack.getOrDefault(WHRegistry.Fireorder,firecomponent.DEFAULT).firecount()>0){
+                    stack.set(WHRegistry.Fireorder, firecomponent.DEFAULT);
+                }
+                return 0.0f;
+            }
+            if(entity instanceof PlayerEntity) stack.set(WHRegistry.Fireorder, new firecomponent(Math.min( 20,stack.getMaxUseTime(entity) - entity.getItemUseTimeLeft())));
+            else stack.set(WHRegistry.Fireorder, new firecomponent(Math.min( 20,(stack.getMaxUseTime(entity) - entity.getItemUseTimeLeft())*5)));
+            return 0;
+        });
+        ModelPredicateProviderRegistry.register(RatlingGun, Identifier.of(reference.modid,"firing"), (stack, world, entity, seed) -> {
+            if (entity == null) {
+                return 0.0f;
+            }
+            if (entity.getActiveItem() != stack) {
+                if(stack.getOrDefault(WHRegistry.Fireorder,firecomponent.DEFAULT).firecount()>0){
+                    stack.set(WHRegistry.Fireorder, firecomponent.DEFAULT);
+                }
+                return 0.0f;
+            }
+            if(!(entity instanceof PlayerEntity)){stack.set(WHRegistry.Fireorder, new firecomponent((stack.getMaxUseTime(entity) - entity.getItemUseTimeLeft())));
+            System.out.println("passed here");
+            }
+            return 0;
         });
         ModelPredicateProviderRegistry.register(ItemsInit.Dwarf_shield,
                 Identifier.ofVanilla((String)"blocking"),
@@ -214,6 +278,65 @@ public class Clientside implements ClientModInitializer {
                         stack.getOrDefault(WHRegistry.AMMO, Ammocomponent.DEFAULT).ammocount() <= 0 &&
                         entity.getItemUseTime()>((GunBase) stack.getItem()).getTimetoreload()?1:0);
 
+    }
+
+    public void registertestingcommands(){
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            dispatcher.register(literal("x")
+                    .then(argument("value_rendering", IntegerArgumentType.integer())
+                            .executes(context -> {SkavenItemInHandLayer.translate_x=IntegerArgumentType.getInteger(context,"value_rendering");
+                                return 0;
+                            })));
+        });
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            dispatcher.register(literal("y")
+                    .then(argument("value_rendering", IntegerArgumentType.integer())
+                            .executes(context -> {SkavenItemInHandLayer.translate_y=IntegerArgumentType.getInteger(context,"value_rendering");
+                                return 0;
+                            })));
+        });
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            dispatcher.register(literal("z")
+                    .then(argument("value_rendering", IntegerArgumentType.integer())
+                            .executes(context -> {SkavenItemInHandLayer.translate_z=IntegerArgumentType.getInteger(context,"value_rendering");
+                                return 0;
+                            })));
+        });
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            dispatcher.register(literal("xrot")
+                    .then(argument("value_rendering", IntegerArgumentType.integer())
+                            .executes(context -> {SkavenItemInHandLayer.rotx=IntegerArgumentType.getInteger(context,"value_rendering");
+                                return 0;
+                            })));
+        });
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            dispatcher.register(literal("yrot")
+                    .then(argument("value_rendering", IntegerArgumentType.integer())
+                            .executes(context -> {SkavenItemInHandLayer.roty=IntegerArgumentType.getInteger(context,"value_rendering");
+                                return 0;
+                            })));
+        });
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            dispatcher.register(literal("pitch")
+                    .then(argument("value_rendering", IntegerArgumentType.integer())
+                            .executes(context -> {SkavenModel.pitch=IntegerArgumentType.getInteger(context,"value_rendering");
+                                return 0;
+                            })));
+        });
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            dispatcher.register(literal("yaw")
+                    .then(argument("value_rendering", IntegerArgumentType.integer())
+                            .executes(context -> {SkavenModel.yaw=IntegerArgumentType.getInteger(context,"value_rendering");
+                                return 0;
+                            })));
+        });
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            dispatcher.register(literal("zrot")
+                    .then(argument("value_rendering", IntegerArgumentType.integer())
+                            .executes(context -> {SkavenItemInHandLayer.rotz=IntegerArgumentType.getInteger(context,"value_rendering");
+                                return 0;
+                            })));
+        });
     }
 /*
     public void receiveEntityPacket() {
