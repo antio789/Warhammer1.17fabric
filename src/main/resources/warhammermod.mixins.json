@@ -4,11 +4,10 @@
   "package": "warhammermod.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "accesssensor"
-
+    "accesssensor",
+    "Serverworld_injection"
   ],
   "server": [
-    "Serverworld_injection"
   ],
   "client": [
     "gunreload",

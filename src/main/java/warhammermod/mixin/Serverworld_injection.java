@@ -26,6 +26,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import warhammermod.world.SkavenPatrolSpawner;
 
+import javax.print.attribute.standard.Sides;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -34,7 +35,16 @@ import java.util.concurrent.Executor;
 
 @Mixin(ServerWorld.class)
 public abstract class Serverworld_injection {
-    @Shadow @Final
+
+    @ModifyVariable(at = @At("CTOR_HEAD"),method = "<init>")
+    public List<SpecialSpawner> replacelist(List<SpecialSpawner> spawners){
+        List<SpecialSpawner> templist = new ArrayList<>(spawners);
+        templist.add(new SkavenPatrolSpawner());
+        return templist;
+    }
+
+    /*
+    * @Shadow @Final
     @Mutable
     private List<SpecialSpawner> spawners;
     @ModifyVariable(at = @At("HEAD"),method = "<init>",ordinal =1)
@@ -43,4 +53,5 @@ public abstract class Serverworld_injection {
         templist.add(new SkavenPatrolSpawner());
         spawners= templist;
     }
+    * */
 }

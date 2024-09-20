@@ -167,9 +167,9 @@ public class SkavenEntity extends PatrolEntity implements SkavenRangedUser {
 
     private static final ArrayList<String> Types = new ArrayList<String>(Arrays.asList(slave,clanrat,stormvermin,gutter_runner,globadier,ratling_gunner));
     private final ArrayList<Float> SkavenSize = new ArrayList<Float>(Arrays.asList(1F,(1.7F/1.6F),(1.8F/1.6F),(1.7F/1.6F),(1.7F/1.6F),(1.7F/1.6F)));
-    private final ArrayList<Integer> Spawnchance = new ArrayList<Integer>(Arrays.asList(3,5,10,5,3,300));//3
+    private final ArrayList<Integer> Spawnchance = new ArrayList<Integer>(Arrays.asList(60,30,5,2,2,1));//3
     private final ArrayList<Float> reinforcementchance = new ArrayList<Float>(Arrays.asList(0.08F,0.1F,0.14F,0F,0.08F,0.11F));
-    private final ArrayList<Integer> firerate = new ArrayList<Integer>(Arrays.asList(28,38,0,0,55,1));
+    private final ArrayList<Integer> firerate = new ArrayList<Integer>(Arrays.asList(28,38,0,0,55,5));
     public static ItemStack[][][] SkavenEquipment =  {{{functions.getRandomspear(4)},{new ItemStack(ItemsInit.Sling)}},
             {{functions.getRandomsword(4),new ItemStack(ItemsInit.Skaven_shield)},{new ItemStack(ItemsInit.Warplock_jezzail)}},
             {{functions.getRandomHalberd(4)},{functions.getRandomsword(5),new ItemStack(ItemsInit.Skaven_shield)}},
@@ -454,7 +454,7 @@ public class SkavenEntity extends PatrolEntity implements SkavenRangedUser {
         return 0.4F +this.random.nextFloat()*0.5F;
     }
 
-    protected void initEquipment(LocalDifficulty difficulty)
+    protected void initEquipment(LocalDifficulty difficulty)//add dropchance
     {
         int typepos = Math.max(Types.indexOf(getSkaventype()),0);
         int weapontype;
@@ -497,21 +497,13 @@ public class SkavenEntity extends PatrolEntity implements SkavenRangedUser {
     }
 
     public static boolean canSpawn(EntityType<SkavenEntity> type, ServerWorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        if (SpawnReason.isAnySpawner(spawnReason)) {
-            return SkavenEntity.canMobSpawn(type, world, spawnReason, pos, random);
-        }
-        if (world.getDifficulty() != Difficulty.PEACEFUL) {
-            if (spawnReason == SpawnReason.SPAWNER) {
-                return SkavenEntity.canMobSpawn(type, world, spawnReason, pos, random);
-            }
-        if (world.getBiome(pos).isIn(BiomeTags.IS_MOUNTAIN )|| pos.getY()<60) {
-                return SkavenEntity.canMobSpawn(type, world, spawnReason, pos, random);
-            }
-        }
+        if (world.getBiome(pos).isIn(BiomeTags.ALLOWS_SURFACE_SLIME_SPAWNS) && pos.getY() > 50 && pos.getY() < 70 && random.nextFloat() < 0.5f) {
+            return HostileEntity.canSpawnInDark(type,world,spawnReason,pos,random);
+        } else if(pos.getY()<60) return HostileEntity.canSpawnInDark(type,world,spawnReason,pos,random);
         return false;
     }
 
-    protected float getDropChance(EquipmentSlot slot) {
+    protected float getDropChance(EquipmentSlot slot) {//bad change this
         float f;
         switch (slot.getType()) {
             case HAND -> {

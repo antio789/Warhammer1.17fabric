@@ -3,9 +3,7 @@ package warhammermod.Entities.Living;
 
 import net.minecraft.block.Blocks;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MovementType;
+import net.minecraft.entity.*;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
@@ -20,7 +18,11 @@ import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.random.Random;
+import net.minecraft.world.LocalDifficulty;
+import net.minecraft.world.ServerWorldAccess;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
 import warhammermod.utils.Registry.Entityinit;
 
 import static warhammermod.Client.Clientside.pegasus_down;
@@ -56,7 +58,6 @@ public class PegasusEntity extends HorseEntity {
             nbt.put("ArmorItem", this.items.getStack(1).writeNbt(new NbtCompound()));
         }
          */
-
     }
 
     public void readCustomDataFromNbt(NbtCompound p_70037_1_) {
@@ -120,28 +121,47 @@ public class PegasusEntity extends HorseEntity {
     }
 */
     public PassiveEntity createChild(ServerWorld world, PassiveEntity partner) {
-        AbstractHorseEntity pegasus=null;
 
         if (partner instanceof DonkeyEntity) {
-            pegasus = EntityType.MULE.create(world);
-        }
-
-        else if (partner instanceof PegasusEntity) {
-
+            MuleEntity muleEntity = EntityType.MULE.create(world);
+            if (muleEntity != null) {
+                this.setChildAttributes(partner, muleEntity);
+            }
+            return muleEntity;
+        } else if (partner instanceof PegasusEntity partner1) {//if a partner is mixblood it will create a new one of those, if both then equal chance.
+            PegasusEntity pegasus;
             pegasus = Entityinit.PEGASUS.create(world);
-            ((PegasusEntity) pegasus).setHorseVariant(HorseColor.WHITE, HorseMarking.NONE);
-        }
-
-        else if (random.nextFloat() < 0.15) {
+            if(pegasus!=null) {
+                if (!partner1.ismixblood() && !this.ismixblood()) {
+                    pegasus.setHorseVariant(HorseColor.WHITE, HorseMarking.NONE);
+                }else{
+                    pegasus.setMixedblood(true);
+                    if(this.ismixblood() && partner1.ismixblood()){
+                        setBabyPegasusVariant(this,partner1,pegasus);
+                    }
+                    else {
+                        if (this.ismixblood()) {
+                            pegasus.setHorseVariant(getVariant(), getMarking());
+                        } else {
+                            pegasus.setHorseVariant(partner1.getHorseVariant());
+                        }
+                    }
+                }
+            }
+            return pegasus;
+        } else if (random.nextFloat() < 0.3) {//small chance to create a colored pegasus 0.15 base7
+            System.out.println("making a mixblooded horse");
             HorseEntity mating_partner = (HorseEntity) partner;
-            pegasus = Entityinit.PEGASUS.create(world);
-            ((PegasusEntity) pegasus).setMixedblood(true);
+            PegasusEntity pegasus = Entityinit.PEGASUS.create(world);
+            if(pegasus==null) return null;
+            pegasus.setMixedblood(true);
 
             int j = this.random.nextInt(9);
             HorseColor coatcolors;
-            if (j < 4) {
-                ((PegasusEntity) pegasus).setMixedblood(false);
-                coatcolors=HorseColor.WHITE;
+            if (j < 3) {
+                if(!this.ismixblood()) {
+                    coatcolors = HorseColor.WHITE;
+                }else coatcolors = this.getVariant();
             }
             else if (j < 8) {
                 coatcolors = mating_partner.getVariant();
@@ -152,25 +172,46 @@ public class PegasusEntity extends HorseEntity {
             int k = this.random.nextInt(5);
             HorseMarking markings;
             if(k<2){
-                markings=HorseMarking.NONE;
+                if(!this.ismixblood()) {
+                    markings = HorseMarking.NONE;
+                }else markings=this.getMarking();
             }
             else if (k < 4) {
                 markings = mating_partner.getMarking();
             } else {
                 markings = Util.getRandom(HorseMarking.values(), this.random);
             }
-
-            ((PegasusEntity) pegasus).setHorseVariant(coatcolors, markings);
-        } else
-        {
-            partner.createChild(world, partner);
+            pegasus.setHorseVariant(coatcolors, markings);
+            return pegasus;
         }
-        if (pegasus != null) {
-            this.setChildAttributes(partner, pegasus);
-        }
-
-        return pegasus;
+        return partner.createChild(world, partner);
     }
+
+    private void setBabyPegasusVariant(PegasusEntity parent1,PegasusEntity parent2,PegasusEntity child){
+        int j = this.random.nextInt(9);
+        HorseColor coatcolors;
+        if (j < 4) {
+            coatcolors=parent1.getVariant();
+        }
+        else if (j < 8) {
+            coatcolors = parent2.getVariant();
+        } else {
+            coatcolors = Util.getRandom(HorseColor.values(), this.random);
+        }
+
+        int k = this.random.nextInt(5);
+        HorseMarking markings;
+        if(k<2){
+            markings=parent1.getMarking();
+        }
+        else if (k < 4) {
+            markings = parent2.getMarking();
+        } else {
+            markings = Util.getRandom(HorseMarking.values(), this.random);
+        }
+         child.setHorseVariant(coatcolors, markings);
+    }
+
 
     /**
      * fun part of having the horse fly

@@ -3,7 +3,7 @@
     {
       "element": {
         "element_type": "minecraft:legacy_single_pool_element",
-        "location": "warhammermod:dwarf_village/town_centers/village/dwarf_meeting_point_1",
+        "location": "warhammermod:dwarf_village/town_centers/underground/dwarf_meeting_point_1",
         "processors": "warhammermod:stonify",
         "projection": "rigid"
       },
@@ -12,7 +12,7 @@
     {
       "element": {
         "element_type": "minecraft:legacy_single_pool_element",
-        "location": "warhammermod:dwarf_village/town_centers/village/tavern",
+        "location": "warhammermod:dwarf_village/town_centers/underground/tavern",
         "processors": "warhammermod:stonify",
         "projection": "rigid"
       },

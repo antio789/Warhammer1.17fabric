@@ -65,10 +65,6 @@ public class WHRegistry {
         FabricDefaultAttributeRegistry.register(Entityinit.DWARF, EntityAttributes.registerDwarfTypesattributes());
     }
 
-    public static void spawnrestrictions(){
-        SpawnRestriction.register(Entityinit.SKAVEN, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES,SkavenEntity::canSpawn);
-        SpawnRestriction.register(Entityinit.PEGASUS,SpawnLocationTypes.ON_GROUND,Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, GoatEntity::canSpawn);
-    }
 
 
     public static final Identifier ratambientID = Identifier.of(reference.modid,"entity.skaven.ambient");

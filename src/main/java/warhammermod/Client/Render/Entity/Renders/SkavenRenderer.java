@@ -6,6 +6,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.MobEntityRenderer;
+import net.minecraft.client.render.entity.feature.HeadFeatureRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
 import warhammermod.Client.Clientside;
@@ -30,6 +31,7 @@ public class SkavenRenderer extends MobEntityRenderer<SkavenEntity, SkavenModel<
     public SkavenRenderer(EntityRendererFactory.Context context) {
         super(context, new SkavenModel<>(context.getPart(Clientside.Skaven)), 0.25F); //p3 0.5F default
         this.addFeature(new SkavenItemInHandLayer<>(this,context.getHeldItemRenderer()));
+        this.addFeature(new HeadFeatureRenderer<>(this, context.getModelLoader(), context.getHeldItemRenderer()));
     }
 
     @Override

@@ -28,12 +28,13 @@ import java.util.List;
 import java.util.concurrent.Executor;
 
 
-@Mixin(MinecraftServer.class)
+@Mixin(ServerWorld.class)
 public abstract class MCserver_injection {
 
-    @ModifyVariable(at = @At("HEAD"),method = "createWorlds",target = @Desc("list"))
-    private ImmutableList<SpecialSpawner> test(ImmutableList<SpecialSpawner> test){
-        System.out.println(test);
-        return test;
+    @ModifyVariable(at = @At("CTOR_HEAD"),method = "<init>",target = @Desc("list"))
+    private List<SpecialSpawner> test(List<SpecialSpawner> spawner){
+        List<SpecialSpawner> templist = new ArrayList<>(spawner);
+        templist.add(new SkavenPatrolSpawner());
+        return templist;
     }
 }

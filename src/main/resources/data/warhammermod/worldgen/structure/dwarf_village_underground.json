@@ -13,7 +13,7 @@
       "absolute": -40
     }
   },
-  "start_pool": "warhammermod:dwarf_village/town_centers",
+  "start_pool": "warhammermod:dwarf_village/town_centers_underground",
   "step": "underground_decoration",
   "terrain_adaptation": "beard_thin",
   "use_expansion_hack": true

@@ -3,16 +3,16 @@
     {
       "element": {
         "element_type": "minecraft:legacy_single_pool_element",
-        "location": "warhammermod:dwarf_village/town_centers/village/dwarf_meeting_point_1",
+        "location": "warhammermod:dwarf_village/lamps/lamp1",
         "processors": "warhammermod:stonify",
         "projection": "rigid"
       },
-      "weight": 1
+      "weight": 4
     },
     {
       "element": {
         "element_type": "minecraft:legacy_single_pool_element",
-        "location": "warhammermod:dwarf_village/town_centers/village/tavern",
+        "location": "warhammermod:dwarf_village/lamps/lamp2",
         "processors": "warhammermod:stonify",
         "projection": "rigid"
       },

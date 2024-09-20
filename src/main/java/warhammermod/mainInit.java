@@ -25,15 +25,21 @@ public class mainInit implements ModInitializer {
      * jezzail zoom in when shooting
      * smoke of warpbullet (WitchFactory use this)
      *rats jezzail, ratling gun, sling, shooting code and visuals
+     * mobs spawning
+     * mobs spawning to test;
+     * pegasus breeding fix - can be revamped to use own color/marking system.
      *
      * TO DO
      *
-     * mobs spawning
-     * pegasus breeding fix
      * lights and street revamp of dwarf village
+     * tutorial book
      *
      * IMPROVEMENTS
      *
+     * lore books
+     * refining mob spawning
+     * skaven slave can hold torch + make it illuminate;
+     * skaven underground patrol
      * ratling gun reload (update rifleattack to use weapon ammo);
      * rats sounds
      * crafting system weapons
@@ -41,6 +47,7 @@ public class mainInit implements ModInitializer {
      * companions
      * smoke when rats fire(put as improvement as it requires sending a packet)
      * dwarfs with rifles(require raycasting to avoid friendly fire)
+     * revamping pegasus color coding
      */
     @Override
     public void onInitialize() {
