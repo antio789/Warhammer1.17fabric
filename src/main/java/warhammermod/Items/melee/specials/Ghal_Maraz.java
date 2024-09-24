@@ -26,7 +26,7 @@ import java.util.List;
 
 public class Ghal_Maraz extends HammerTemplate {
     public Ghal_Maraz(Item.Settings builder){
-        super(ToolMaterials.NETHERITE,builder.attributeModifiers(HammerTemplate.createAttributeModifiers(ToolMaterials.NETHERITE,0.5F,5)));
+        super(ToolMaterials.NETHERITE,builder,6,-2.5F);
     }
 
 

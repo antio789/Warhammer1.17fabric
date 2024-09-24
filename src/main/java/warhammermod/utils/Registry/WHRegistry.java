@@ -34,6 +34,7 @@ import warhammermod.world.EntitySpawning;
 public class WHRegistry {
 
     public static final RegistryKey<LootTable> HERO_OF_THE_VILLAGE_LORD_GIFT_GAMEPLAY;
+    public static final RegistryKey<LootTable> GIVE_TUTORIAL_BOOK;
 
     public static final ComponentType<Ammocomponent> AMMO= ComponentType.<Ammocomponent>builder().codec(Ammocomponent.CODEC).packetCodec(Ammocomponent.PACKET_CODEC).build();
     public static final ComponentType<firecomponent> Fireorder= ComponentType.<firecomponent>builder().codec(firecomponent.CODEC).packetCodec(firecomponent.PACKET_CODEC).build();
@@ -122,9 +123,9 @@ public class WHRegistry {
 
         SECONDARY_POIS= Registry.register(Registries.SENSOR_TYPE,SECONDARY_POIS_id, accesssensor.init(DwarfSecondaryPointsOfInterestSensor::new));
 
-        HERO_OF_THE_VILLAGE_LORD_GIFT_GAMEPLAY= RegistryKey.of(RegistryKeys.LOOT_TABLE,Identifier.of(reference.modid,"dwarf_profession"));
+        HERO_OF_THE_VILLAGE_LORD_GIFT_GAMEPLAY= RegistryKey.of(RegistryKeys.LOOT_TABLE,Identifier.of(reference.modid,"gameplay/hero_of_the_village/lord_gift"));
 
-
+        GIVE_TUTORIAL_BOOK = RegistryKey.of(RegistryKeys.LOOT_TABLE,Identifier.of(reference.modid,"gameplay/books2"));
 
     }
 

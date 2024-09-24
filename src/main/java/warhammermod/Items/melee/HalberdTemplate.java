@@ -25,7 +25,7 @@ public class HalberdTemplate extends SwordItem {
 
 
     public HalberdTemplate(ToolMaterial tier, Settings properties) {
-        super(tier, properties.attributeModifiers(HalberdTemplate.createAttributeModifiers(tier,4.5F + tier.getAttackDamage()*2,-2.8F)));
+        super(tier, properties.attributeModifiers(HalberdTemplate.createAttributeModifiers(tier,3F,-2.8F)));
     }
 
     public TypedActionResult<ItemStack> use(World level, PlayerEntity player, Hand hand) {

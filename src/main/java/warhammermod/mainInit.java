@@ -1,14 +1,34 @@
 package warhammermod;
 
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.loot.LootTable;
+import net.minecraft.loot.LootTables;
+import net.minecraft.loot.context.LootContextParameterSet;
+import net.minecraft.loot.context.LootContextParameters;
+import net.minecraft.loot.context.LootContextTypes;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+
+import warhammermod.Client.Render.Item.RenderRepeater;
 import warhammermod.Enchantements.ModEnchantements;
+
 import warhammermod.utils.ItemFiringPayload;
 import warhammermod.utils.Registry.Entityinit;
 import warhammermod.utils.Registry.ItemsInit;
 import warhammermod.utils.Registry.WHRegistry;
+import warhammermod.utils.emptyload;
 import warhammermod.utils.reference;
+import static net.minecraft.server.command.CommandManager.*;
 
 
 public class mainInit implements ModInitializer {
@@ -28,11 +48,16 @@ public class mainInit implements ModInitializer {
      * mobs spawning
      * mobs spawning to test;
      * pegasus breeding fix - can be revamped to use own color/marking system.
+     * lights and street revamp of dwarf village, increase length of streets.
+     *  skaven drop equipment only when killed
+     *  add recipes to recipe book
+     *  tutorial book
      *
      * TO DO
      *
-     * lights and street revamp of dwarf village
-     * tutorial book
+     * dwarf village building generation chance
+     * code cleanup, unused assets.
+     *
      *
      * IMPROVEMENTS
      *
@@ -59,8 +84,39 @@ public class mainInit implements ModInitializer {
         ItemsInit.initialize();
 
         WHRegistry.initialize();
-        PayloadTypeRegistry.playS2C().register(ItemFiringPayload.ID, ItemFiringPayload.CODEC);
+        //PayloadTypeRegistry.playS2C().register(ItemFiringPayload.ID, ItemFiringPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(emptyload.ID,emptyload.CODEC);
         //Spawn.addEntitySpawn();
+        /*
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> dispatcher.register(literal("WH_tutorialbook")
+                .executes(context -> {
+                    // For versions below 1.19, replace "Text.literal" with "new LiteralText".
+                    // For versions below 1.20, remode "() ->" directly.
+
+                    ServerWorld world = context.getSource().getPlayer().getServerWorld();
+                    PlayerEntity player = context.getSource().getPlayer();
+                    LootTable lootTable = world.getServer().getReloadableRegistries().getLootTable(WHRegistry.GIVE_TUTORIAL_BOOK);
+                    LootContextParameterSet lootContextParameterSet = new LootContextParameterSet.Builder(world).add(LootContextParameters.ORIGIN, player.getPos()).add(LootContextParameters.THIS_ENTITY, player).build(LootContextTypes.GIFT);
+                    ObjectArrayList<ItemStack> list2 = lootTable.generateLoot(lootContextParameterSet);
+                    for (ItemStack itemStack : list2) {
+                        context.getSource().sendFeedback(() -> Text.literal(itemStack.toString()), false);
+                        player.giveItemStack(itemStack);
+                    }
+                    context.getSource().sendFeedback(() -> Text.literal("Called /foo with no arguments"), false);
+
+                    return 1;
+                })));
+*/
+        ServerPlayNetworking.registerGlobalReceiver(emptyload.ID,(payload, context) -> {
+            ServerWorld world = context.player().getServerWorld();
+            PlayerEntity player = context.player();
+            LootTable lootTable = world.getServer().getReloadableRegistries().getLootTable(WHRegistry.GIVE_TUTORIAL_BOOK);
+            LootContextParameterSet lootContextParameterSet = new LootContextParameterSet.Builder(world).add(LootContextParameters.ORIGIN, player.getPos()).add(LootContextParameters.THIS_ENTITY, player).build(LootContextTypes.GIFT);
+            ObjectArrayList<ItemStack> list2 = lootTable.generateLoot(lootContextParameterSet);
+            for (ItemStack itemStack : list2) {
+                player.giveItemStack(itemStack);
+            }
+        });
     }
 
     public static final Identifier HIGHLIGHT_PACKET_ID = Identifier.of(reference.modid, "shooting_packet");

@@ -61,7 +61,7 @@
         "processors": "warhammermod:stonify",
         "projection": "terrain_matching"
       },
-      "weight": 2
+      "weight": 3
     },
     {
       "element": {

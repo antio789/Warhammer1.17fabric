@@ -47,7 +47,6 @@ public class RenderSling implements BuiltinItemRendererRegistry.DynamicItemRende
         SlingTemplate item = (SlingTemplate) stack.getItem();
         matrices.push();
         matrices.scale(1.0F, -1.0F, -1.0F);
-        System.out.println(stack.getOrDefault(WHRegistry.Fireorder, firecomponent.DEFAULT).firecount());
         VertexConsumer ivertexbuilder1 = ItemRenderer.getDirectItemGlintConsumer(vertexConsumers, this.model.getLayer(resource_location), false, stack.hasGlint());
         this.model.render(matrices, ivertexbuilder1, light, overlay, -1,stack);
         matrices.pop();

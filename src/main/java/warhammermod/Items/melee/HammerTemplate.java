@@ -13,7 +13,11 @@ public class HammerTemplate extends SwordItem {
     protected float attackSpeed;
 
     public HammerTemplate(ToolMaterial tier, Settings properties) {
-        super(tier, properties.attributeModifiers(HammerTemplate.createAttributeModifiers(tier,2.5F+ tier.getAttackDamage()*2,-2.9F)));
+        super(tier, properties.attributeModifiers(HammerTemplate.createAttributeModifiers(tier, 3F + tier.getAttackDamage()+(tier.getAttackDamage()>3?-1:0),-2.8F)));
+    }
+
+    public HammerTemplate(ToolMaterial tier, Settings properties,float base_damage,float base_speed) {
+        super(tier, properties.attributeModifiers(HammerTemplate.createAttributeModifiers(tier, 3F + base_damage+(tier.getAttackDamage()>3?-1:0),base_speed)));
     }
 
     public static AttributeModifiersComponent createAttributeModifiers(ToolMaterial material, float baseAttackDamage, float attackSpeed) {

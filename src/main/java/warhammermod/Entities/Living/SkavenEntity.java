@@ -2,7 +2,9 @@ package warhammermod.Entities.Living;
 
 
 import net.minecraft.block.BlockState;
+import net.minecraft.component.EnchantmentEffectComponentTypes;
 import net.minecraft.component.type.PotionContentsComponent;
+import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.goal.*;
@@ -50,6 +52,7 @@ import warhammermod.utils.Registry.Entityinit;
 import warhammermod.utils.Registry.ItemsInit;
 import warhammermod.utils.Registry.WHRegistry;
 import warhammermod.utils.functions;
+import warhammermod.utils.reference;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -167,7 +170,7 @@ public class SkavenEntity extends PatrolEntity implements SkavenRangedUser {
 
     private static final ArrayList<String> Types = new ArrayList<String>(Arrays.asList(slave,clanrat,stormvermin,gutter_runner,globadier,ratling_gunner));
     private final ArrayList<Float> SkavenSize = new ArrayList<Float>(Arrays.asList(1F,(1.7F/1.6F),(1.8F/1.6F),(1.7F/1.6F),(1.7F/1.6F),(1.7F/1.6F)));
-    private final ArrayList<Integer> Spawnchance = new ArrayList<Integer>(Arrays.asList(60,30,5,2,2,1));//3
+    private final ArrayList<Integer> Spawnchance = new ArrayList<Integer>(Arrays.asList(57,33,5,2,2,1));
     private final ArrayList<Float> reinforcementchance = new ArrayList<Float>(Arrays.asList(0.08F,0.1F,0.14F,0F,0.08F,0.11F));
     private final ArrayList<Integer> firerate = new ArrayList<Integer>(Arrays.asList(28,38,0,0,55,5));
     public static ItemStack[][][] SkavenEquipment =  {{{functions.getRandomspear(4)},{new ItemStack(ItemsInit.Sling)}},
@@ -208,7 +211,7 @@ public class SkavenEntity extends PatrolEntity implements SkavenRangedUser {
         handleAttributes();
     }
 
-    private void setSkavenType(String type){
+    public void setSkavenType(String type){
         this.dataTracker.set(SkavenType,type);
     }
 
@@ -247,7 +250,9 @@ public class SkavenEntity extends PatrolEntity implements SkavenRangedUser {
     }
     @Nullable
     public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficultyIn, SpawnReason reason, @Nullable EntityData spawnDataIn) {
-        setSkavenType(getrandomtype());
+        if(this.isPatrolLeader()){setSkavenType(stormvermin);
+        } else setSkavenType(getrandomtype());
+
         this.initEquipment(difficultyIn);
         this.updateEnchantments(world,random,difficultyIn);
         this.reassessWeaponGoal();
@@ -285,7 +290,7 @@ public class SkavenEntity extends PatrolEntity implements SkavenRangedUser {
             armor=5;
             speed=0.25;
         }else if(getSkaventype().equals(gutter_runner)){
-            AD=5;
+            AD=4;
             max_health=14;
             speed=0.5;
         }
@@ -391,10 +396,9 @@ public class SkavenEntity extends PatrolEntity implements SkavenRangedUser {
     public boolean damage(DamageSource source, float amount){
         if (!super.damage(source, amount)) {
             return false;
-        } else if (!(this.getWorld() instanceof ServerWorld)) {
+        } else if (!(this.getWorld() instanceof ServerWorld serverworld)) {
             return false;
         } else {
-            ServerWorld serverworld = (ServerWorld)this.getWorld();
             LivingEntity livingentity = this.getTarget();
             if (livingentity == null && source.getAttacker() instanceof LivingEntity) {
                 livingentity = (LivingEntity)source.getAttacker();
@@ -469,7 +473,12 @@ public class SkavenEntity extends PatrolEntity implements SkavenRangedUser {
             if(SkavenEquipment[typepos][weapontype].length>1){
                 this.equipStack(EquipmentSlot.OFFHAND,SkavenEquipment[typepos][weapontype][1]);
             }
-        }if(getMainHandStack().getItem() instanceof RatlingGun gun){getMainHandStack().set(WHRegistry.AMMO,new Ammocomponent( random.nextBetween(0,64),64));}
+        }
+        Item item = getMainHandStack().getItem();
+        if(item instanceof RatlingGun gun){getMainHandStack().set(WHRegistry.AMMO,new Ammocomponent( random.nextBetween(0,64),64));}
+        if(item instanceof IReloadItem){
+            this.handDropChances[EquipmentSlot.MAINHAND.getEntitySlotId()] = 1.0f;
+        }
     }
     /*
     protected void updateEnchantments(LocalDifficulty difficulty) {
@@ -503,12 +512,12 @@ public class SkavenEntity extends PatrolEntity implements SkavenRangedUser {
         return false;
     }
 
-    protected float getDropChance(EquipmentSlot slot) {//bad change this
+    protected float getDropChance(EquipmentSlot slot) {
         float f;
         switch (slot.getType()) {
             case HAND -> {
                 f = this.handDropChances[slot.getEntitySlotId()];
-                if (this.getMainHandStack().getItem() instanceof IReloadItem) f = 2;
+                if (this.getMainHandStack().getItem() instanceof IReloadItem) f = 1;
             }
             case HUMANOID_ARMOR -> f = this.armorDropChances[slot.getEntitySlotId()];
             default -> f = 0.0F;
@@ -516,6 +525,7 @@ public class SkavenEntity extends PatrolEntity implements SkavenRangedUser {
 
         return f;
     }
+
 
     @Override
     public boolean isBlocking() {

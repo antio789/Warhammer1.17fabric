@@ -30,7 +30,7 @@ public class EntitySpawning {
     public static void addSpawn(){
         BiomeModifications.addSpawn(BiomeSelectors.tag(BiomeTags.IS_MOUNTAIN), SpawnGroup.CREATURE,Entityinit.PEGASUS,40,1,3);
         BiomeModifications.addSpawn(BiomeSelectors.tag(BiomeTags.IS_MOUNTAIN),SpawnGroup.MONSTER,Entityinit.SKAVEN,80,3,6);
-        BiomeModifications.addSpawn(BiomeSelectors.tag(BiomeTags.ALLOWS_SURFACE_SLIME_SPAWNS),SpawnGroup.MONSTER,Entityinit.SKAVEN,50,3,5);
+        BiomeModifications.addSpawn(BiomeSelectors.tag(BiomeTags.ALLOWS_SURFACE_SLIME_SPAWNS),SpawnGroup.MONSTER,Entityinit.SKAVEN,30,3,5);
         BiomeModifications.addSpawn(BiomeSelectors.tag(BiomeTags.VILLAGE_PLAINS_HAS_STRUCTURE),SpawnGroup.MONSTER,Entityinit.SKAVEN,30,3,5);
     }
 

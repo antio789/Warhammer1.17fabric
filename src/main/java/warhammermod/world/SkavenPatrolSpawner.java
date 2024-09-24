@@ -14,7 +14,9 @@ import net.minecraft.world.Heightmap;
 import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.spawner.SpecialSpawner;
+import warhammermod.Entities.Living.SkavenEntity;
 import warhammermod.utils.Registry.Entityinit;
+import warhammermod.utils.reference;
 
 public class SkavenPatrolSpawner implements SpecialSpawner {
 
@@ -36,7 +38,7 @@ public class SkavenPatrolSpawner implements SpecialSpawner {
         }
         this.cooldown += 1000 + random.nextInt(400);//cd 1000 + rand 400
         long l = world.getTimeOfDay() / 24000L;
-        if (l < 5L && false) {
+        if (l < 5L) {
             return 0;
         }
         if (random.nextInt(1) != 0) {//5
@@ -93,7 +95,7 @@ public class SkavenPatrolSpawner implements SpecialSpawner {
         if (!PatrolEntity.canSpawn(Entityinit.SKAVEN, world, SpawnReason.PATROL, pos, random)) {
             return false;
         }
-        PatrolEntity patrolEntity = Entityinit.SKAVEN.create(world);
+        SkavenEntity patrolEntity = Entityinit.SKAVEN.create(world);
         if (patrolEntity != null) {
             if (captain) {
                 patrolEntity.setPatrolLeader(true);
@@ -102,7 +104,6 @@ public class SkavenPatrolSpawner implements SpecialSpawner {
             patrolEntity.setPosition(pos.getX(), pos.getY(), pos.getZ());
             patrolEntity.initialize(world, world.getLocalDifficulty(pos), SpawnReason.PATROL, null);
             world.spawnEntityAndPassengers(patrolEntity);
-            System.out.println("spawned patrol at: " + pos.getX() + "  "+pos.getY()+"  "+pos.getZ());
             return true;
         }
         return false;

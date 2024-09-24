@@ -1,16 +1,19 @@
 package warhammermod.Client;
 
+import com.mojang.brigadier.LiteralMessage;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.item.ModelPredicateProviderRegistry;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.entity.FlyingItemEntityRenderer;
@@ -18,6 +21,10 @@ import net.minecraft.client.render.entity.model.EntityModelLayer;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.text.PlainTextContent;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 import warhammermod.Client.Render.Entity.Renders.DwarfRenderer;
@@ -41,10 +48,12 @@ import warhammermod.Client.particles.warpparticle;
 import warhammermod.Items.Ammocomponent;
 import warhammermod.Items.GunBase;
 import warhammermod.Items.firecomponent;
+import warhammermod.mainInit;
 import warhammermod.utils.ItemFiringPayload;
 import warhammermod.utils.Registry.Entityinit;
 import warhammermod.utils.Registry.ItemsInit;
 import warhammermod.utils.Registry.WHRegistry;
+import warhammermod.utils.emptyload;
 import warhammermod.utils.reference;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
@@ -63,9 +72,16 @@ public class Clientside implements ClientModInitializer {
         registerModelPredicates();
 
         ParticleFactoryRegistry.getInstance().register(WHRegistry.WARP, warpparticle.InstantFactory::new);
-
+/*
         ClientPlayNetworking.registerGlobalReceiver(ItemFiringPayload.ID, (payload, context) -> {
             context.client().execute(() -> RenderRepeater.ItemstackFired(payload.stack()));
+        });
+*/
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            while (Wiki_Map.wasPressed()) {
+                client.player.sendMessage(Text.translatable("warhammer_wiki map"), false);
+                ClientPlayNetworking.send(new emptyload());
+            }
         });
     }
 
@@ -114,15 +130,15 @@ public class Clientside implements ClientModInitializer {
 
 
     public void registerkeys(){
-        pegasus_down = KeyBindingHelper.registerKeyBinding(new KeyBinding("key"+reference.modid+"pegasusdown",
+        pegasus_down = KeyBindingHelper.registerKeyBinding(new KeyBinding("key_"+reference.modid+"_pegasus_down",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_R,
-                "category"+reference.modid
+                "category_"+reference.modid
                 ));
-        Wiki_Map = KeyBindingHelper.registerKeyBinding(new KeyBinding("key"+reference.modid+"wiki_map",
+        Wiki_Map = KeyBindingHelper.registerKeyBinding(new KeyBinding("key_"+reference.modid+"_wiki_map",
                 InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_L,
-                "category"+reference.modid
+                GLFW.GLFW_KEY_UNKNOWN,
+                "category_"+reference.modid
         ));
     }
     public void registerRenderer(){

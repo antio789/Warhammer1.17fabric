@@ -35,7 +35,7 @@ public class WarpgunTemplate extends GunBase implements IReloadItem {
             world.playSound(null,player.getX(),player.getY(),player.getZ(), SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS,1F,1.35F/(rand.nextFloat()*0.4F+1.2F)+0.5F);
             WarpBulletEntity bullet = new WarpBulletEntity(player,world, damage,stack,findAmmo(player));
             bullet.setPosition(player.getX(), player.getEyeY() - 0.26, player.getZ());
-            bullet.setVelocity(player,player.getPitch(), player.getYaw(), 1, 3.5F, 0.3F);
+            bullet.setVelocity(player,player.getPitch(), player.getYaw(), 1, 4F, 0.1F);
 
             int i = ModEnchantmentHelper.getLevel(world,stack, Enchantments.POWER);
             if (i > 0) {

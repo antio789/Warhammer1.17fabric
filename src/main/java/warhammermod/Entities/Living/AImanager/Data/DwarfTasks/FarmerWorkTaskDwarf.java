@@ -76,7 +76,7 @@ extends VillagerWorkTaskDwarf {
 
     private void craftAndDropBread(DwarfEntity entity) {
         SimpleInventory simpleInventory = entity.getInventory();
-        if (simpleInventory.count(ItemsInit.Beer) > 12) {
+        if (simpleInventory.count(ItemsInit.BEER) > 12) {
             return;
         }
         int i = simpleInventory.count(Items.WHEAT);
@@ -88,7 +88,7 @@ extends VillagerWorkTaskDwarf {
         }
         int m = l * 6;
         simpleInventory.removeItem(Items.WHEAT, m);
-        ItemStack itemStack = simpleInventory.addStack(new ItemStack(ItemsInit.Beer, l));
+        ItemStack itemStack = simpleInventory.addStack(new ItemStack(ItemsInit.BEER, l));
         if (!itemStack.isEmpty()) {
             entity.dropStack(itemStack, 0.5f);
         }

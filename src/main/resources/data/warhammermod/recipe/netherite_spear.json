@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:smithing_transform",
+  "base": {
+    "item": "warhammermod:diamond_spear"
+  },
+  "addition": {
+    "item": "minecraft:netherite_ingot"
+  },
+  "result": {
+    "id": "warhammermod:netherite_spear",
+    "count": 1
+  },
+  "template": {
+    "item": "minecraft:netherite_upgrade_smithing_template"
+  }
+
+}

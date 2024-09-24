@@ -22,7 +22,7 @@ public class ItemsInit {
     public static void initialize() {
         Registry.register(Registries.ITEM_GROUP, CUSTOM_ITEM_GROUP_KEY, Modgroup);
         ItemGroupEvents.modifyEntriesEvent(CUSTOM_ITEM_GROUP_KEY).register(itemgroup -> {
-            itemgroup.add(Beer);
+            itemgroup.add(BEER);
 
             itemgroup.add(Cartridge);
             itemgroup.add(Warpstone);
@@ -93,7 +93,7 @@ public class ItemsInit {
     }
     //FOOD
     public static FoodComponent BEER_EFFECT= new FoodComponent.Builder().nutrition(4).saturationModifier(0.4F).statusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, 400, 1), 0.8F).statusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, 120, 0), 0.6F).statusEffect(new StatusEffectInstance(StatusEffects.NAUSEA, 220, 1), 0.18F).alwaysEdible().build();
-    public static Item Beer = register(new Item(new Item.Settings().rarity(Rarity.RARE).food(BEER_EFFECT).maxCount(16)),"beer");
+    public static Item BEER = register(new Item(new Item.Settings().rarity(Rarity.RARE).food(BEER_EFFECT).maxCount(16)),"beer");
 //basic items
     public static Item Cartridge = register(new Item(new Item.Settings()),"cartridge");
     public static Item Warpstone = register(new Item(new Item.Settings()),"warpstone");
@@ -143,11 +143,11 @@ public class ItemsInit {
     public static Item thunderer_handgun = register(new GunTemplate(new Item.Settings().maxDamage(540), Cartridge,35,1,16),"thunderer_handgun");
 
     public static Item blunderbuss = register(new ShotgunTemplate(new Item.Settings().maxDamage(390), Shotshell,40,1,19),"blunderbuss");
-    public static Item GrudgeRaker = register(new ShotgunTemplate(new Item.Settings().maxDamage(450), Shotshell,40,2,19),"GrudgeRaker");
+    public static Item GrudgeRaker = register(new ShotgunTemplate(new Item.Settings().maxDamage(450), Shotshell,50,2,19),"GrudgeRaker");
 
     public static Item grenade_launcher = register(new GrenadeTemplate(new Item.Settings().maxDamage(384), Grenade,75,1),"grenade_launcher");
 
-    public static Item DrakeGun = register(new DrakeGunTemplate(new Item.Settings().maxDamage(210),64,40),"DrakeGun");
+    public static Item DrakeGun = register(new DrakeGunTemplate(new Item.Settings().maxDamage(210),32,40),"DrakeGun");
     public static Item RatlingGun = register(new RatlingGun(new Item.Settings().maxDamage(210),64,80),"Ratling_Gun");
 
     public static Item Warplock_jezzail = register(new WarpgunTemplate(new Item.Settings().maxDamage(384), Warpstone,50,1,14),"Warplock_jezzail");
@@ -179,7 +179,4 @@ public class ItemsInit {
             .icon(() -> new ItemStack(GHAL_MARAZ))
             .displayName(Text.translatable("itemGroup.warhammermod.warhammer"))
             .build();
-
-
-
 }
