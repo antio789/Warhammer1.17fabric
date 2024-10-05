@@ -48,7 +48,7 @@ import net.minecraft.util.profiler.Profiler;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
-
+@Environment(EnvType.CLIENT)
 @Mixin(ModelLoader.class)
 public abstract class ModelLoaderMixin {
 

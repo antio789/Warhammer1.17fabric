@@ -42,7 +42,7 @@
             "predicate": {
                 "pull": 10
             },
-            "model": "warhammermod/sling"
+            "model": "warhammermod:item/sling"
         }
     ]
 }

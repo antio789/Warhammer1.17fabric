@@ -16,6 +16,6 @@
   "slots": [
     "mainhand"
   ],
-  "supported_items": "#warhammermod:tag.item.warhammermod.grenade_enchantements",
+  "supported_items": "#warhammermod:grenade_enchantements",
   "weight": 10
 }

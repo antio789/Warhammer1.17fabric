@@ -1,34 +1,23 @@
 package warhammermod;
 
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.loot.LootTable;
-import net.minecraft.loot.LootTables;
 import net.minecraft.loot.context.LootContextParameterSet;
 import net.minecraft.loot.context.LootContextParameters;
 import net.minecraft.loot.context.LootContextTypes;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-
-import warhammermod.Client.Render.Item.RenderRepeater;
 import warhammermod.Enchantements.ModEnchantements;
-
-import warhammermod.utils.ItemFiringPayload;
 import warhammermod.utils.Registry.Entityinit;
 import warhammermod.utils.Registry.ItemsInit;
 import warhammermod.utils.Registry.WHRegistry;
 import warhammermod.utils.emptyload;
 import warhammermod.utils.reference;
-import static net.minecraft.server.command.CommandManager.*;
 
 
 public class mainInit implements ModInitializer {
@@ -55,12 +44,13 @@ public class mainInit implements ModInitializer {
      *
      * TO DO
      *
-     * dwarf village building generation chance
+     *
      * code cleanup, unused assets.
      *
      *
      * IMPROVEMENTS
      *
+     * dwarf village building generation chance
      * lore books
      * refining mob spawning
      * skaven slave can hold torch + make it illuminate;
@@ -103,7 +93,6 @@ public class mainInit implements ModInitializer {
                         player.giveItemStack(itemStack);
                     }
                     context.getSource().sendFeedback(() -> Text.literal("Called /foo with no arguments"), false);
-
                     return 1;
                 })));
 */

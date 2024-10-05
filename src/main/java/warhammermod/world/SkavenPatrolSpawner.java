@@ -36,9 +36,9 @@ public class SkavenPatrolSpawner implements SpecialSpawner {
         if (this.cooldown > 0) {
             return 0;
         }
-        this.cooldown += 1000 + random.nextInt(400);//cd 1000 + rand 400
+        this.cooldown += 1500 + random.nextInt(600);//cd 2000 + rand 400
         long l = world.getTimeOfDay() / 24000L;
-        if (l < 5L) {
+        if (l < 5L && false) {
             return 0;
         }
         if (random.nextInt(1) != 0) {//5
