@@ -12,7 +12,6 @@ import net.minecraft.client.render.entity.model.EntityModelLoader;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.resource.SynchronousResourceReloader;
@@ -20,9 +19,7 @@ import net.minecraft.util.Identifier;
 import warhammermod.Client.Clientside;
 import warhammermod.Client.Render.Item.Model.RepeaterModel;
 import warhammermod.Items.Ammocomponent;
-import warhammermod.Items.firecomponent;
 import warhammermod.utils.Registry.WHRegistry;
-import warhammermod.utils.functions;
 import warhammermod.utils.reference;
 
 

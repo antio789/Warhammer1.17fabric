@@ -5,7 +5,7 @@ package warhammermod.Entities.Living.AImanager.Data.DwarfTasks;
 
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
-import net.minecraft.entity.ai.brain.task.LookTargetUtil;
+import net.minecraft.entity.ai.brain.task.TargetUtil;
 import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraft.entity.ai.brain.task.TaskTriggerer;
 import net.minecraft.entity.ai.pathing.Path;
@@ -41,7 +41,7 @@ public class TakeJobSiteTaskDwarf {
                         lookTarget.forget();
                         potentialJobSite.forget();
                         if (dwarf instanceof DwarfEntity dwarf1 && dwarf1.getBrain().getOptionalRegisteredMemory(MemoryModuleType.JOB_SITE).isEmpty()){
-                            LookTargetUtil.walkTowards((LivingEntity)dwarf1, blockPos, speed, 1);
+                            TargetUtil.walkTowards((LivingEntity)dwarf1, blockPos, speed, 1);
                             dwarf1.getBrain().remember(MemoryModuleType.POTENTIAL_JOB_SITE, GlobalPos.create(world.getRegistryKey(), blockPos));
                             DebugInfoSender.sendPointOfInterest(world, blockPos);
                         }

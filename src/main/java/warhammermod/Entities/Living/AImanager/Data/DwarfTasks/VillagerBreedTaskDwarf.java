@@ -5,12 +5,11 @@ package warhammermod.Entities.Living.AImanager.Data.DwarfTasks;
 
 import com.google.common.collect.ImmutableMap;
 import net.minecraft.entity.EntityStatuses;
-import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.MemoryModuleState;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
-import net.minecraft.entity.ai.brain.task.LookTargetUtil;
 import net.minecraft.entity.ai.brain.task.MultiTickTask;
+import net.minecraft.entity.ai.brain.task.TargetUtil;
 import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.registry.entry.RegistryEntry;
@@ -46,7 +45,7 @@ extends MultiTickTask<DwarfEntity> {
     @Override
     protected void run(ServerWorld serverWorld, DwarfEntity dwarfEntity, long l) {
         PassiveEntity passiveEntity = dwarfEntity.getBrain().getOptionalRegisteredMemory(MemoryModuleType.BREED_TARGET).get();
-        LookTargetUtil.lookAtAndWalkTowardsEachOther(dwarfEntity, passiveEntity, 0.5f, 2);
+        TargetUtil.lookAtAndWalkTowardsEachOther(dwarfEntity, passiveEntity, 0.5f, 2);
         serverWorld.sendEntityStatus(passiveEntity, EntityStatuses.ADD_BREEDING_PARTICLES);
         serverWorld.sendEntityStatus(dwarfEntity, EntityStatuses.ADD_BREEDING_PARTICLES);
         int i = 275 + dwarfEntity.getRandom().nextInt(50);
@@ -59,7 +58,7 @@ extends MultiTickTask<DwarfEntity> {
         if (dwarfEntity.squaredDistanceTo(dwarfEntity2) > 5.0) {
             return;
         }
-        LookTargetUtil.lookAtAndWalkTowardsEachOther(dwarfEntity, dwarfEntity2, 0.5f, 2);
+        TargetUtil.lookAtAndWalkTowardsEachOther(dwarfEntity, dwarfEntity2, 0.5f, 2);
         if (l >= this.breedEndTime) {
             dwarfEntity.eatForBreeding();
             dwarfEntity2.eatForBreeding();
@@ -94,7 +93,7 @@ extends MultiTickTask<DwarfEntity> {
     private boolean isReadyToBreed(DwarfEntity villager) {
         Brain<DwarfEntity> brain = villager.getBrain();
         Optional<PassiveEntity> optional = brain.getOptionalRegisteredMemory(MemoryModuleType.BREED_TARGET).filter(passiveEntity -> passiveEntity.getType() == Entityinit.DWARF);
-        return optional.filter(passiveEntity -> LookTargetUtil.canSee(brain, MemoryModuleType.BREED_TARGET, Entityinit.DWARF) && villager.isReadyToBreed() && passiveEntity.isReadyToBreed()).isPresent();
+        return optional.filter(passiveEntity -> TargetUtil.canSee(brain, MemoryModuleType.BREED_TARGET, Entityinit.DWARF) && villager.isReadyToBreed() && passiveEntity.isReadyToBreed()).isPresent();
     }
 
     private Optional<BlockPos> getReachableHome(ServerWorld world, DwarfEntity villager) {

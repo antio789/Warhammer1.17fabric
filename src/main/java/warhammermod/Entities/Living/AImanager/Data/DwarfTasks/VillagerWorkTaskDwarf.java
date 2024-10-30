@@ -4,7 +4,6 @@
 package warhammermod.Entities.Living.AImanager.Data.DwarfTasks;
 
 import com.google.common.collect.ImmutableMap;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.BlockPosLookTarget;
 import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.MemoryModuleState;

@@ -1,7 +1,6 @@
 package warhammermod.mixin;
 
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;

@@ -2,25 +2,14 @@ package warhammermod.world;
 
 import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
 import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
-import net.minecraft.entity.*;
-import net.minecraft.entity.passive.AnimalEntity;
+import net.minecraft.entity.SpawnGroup;
+import net.minecraft.entity.SpawnLocationTypes;
+import net.minecraft.entity.SpawnRestriction;
 import net.minecraft.entity.passive.GoatEntity;
 import net.minecraft.registry.tag.BiomeTags;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.Difficulty;
 import net.minecraft.world.Heightmap;
-import net.minecraft.world.ServerWorldAccess;
-import net.minecraft.world.WorldAccess;
 import warhammermod.Entities.Living.SkavenEntity;
 import warhammermod.utils.Registry.Entityinit;
-
-import java.util.Objects;
-import java.util.Optional;
-
-import static net.minecraft.entity.mob.HostileEntity.isSpawnDark;
-import static net.minecraft.entity.mob.MobEntity.canMobSpawn;
 
 public class EntitySpawning {
     public static void SpawnRestriction(){

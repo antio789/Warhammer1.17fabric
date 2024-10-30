@@ -16,7 +16,6 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.spawner.SpecialSpawner;
 import warhammermod.Entities.Living.SkavenEntity;
 import warhammermod.utils.Registry.Entityinit;
-import warhammermod.utils.reference;
 
 public class SkavenPatrolSpawner implements SpecialSpawner {
 

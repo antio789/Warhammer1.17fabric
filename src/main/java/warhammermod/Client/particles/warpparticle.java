@@ -7,9 +7,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.particle.*;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.SimpleParticleType;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.random.Random;
 
 @Environment(value=EnvType.CLIENT)

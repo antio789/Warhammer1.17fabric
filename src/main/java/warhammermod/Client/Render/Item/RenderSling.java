@@ -5,8 +5,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.item.ModelPredicateProviderRegistry;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.model.EntityModelLoader;
@@ -19,9 +17,7 @@ import net.minecraft.resource.SynchronousResourceReloader;
 import net.minecraft.util.Identifier;
 import warhammermod.Client.Clientside;
 import warhammermod.Client.Render.Item.Model.SlingModel;
-import warhammermod.Items.firecomponent;
 import warhammermod.Items.ranged.SlingTemplate;
-import warhammermod.utils.Registry.WHRegistry;
 import warhammermod.utils.reference;
 @Environment(EnvType.CLIENT)
 public class RenderSling implements BuiltinItemRendererRegistry.DynamicItemRenderer, SynchronousResourceReloader {

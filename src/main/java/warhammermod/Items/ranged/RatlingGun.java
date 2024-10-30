@@ -9,7 +9,6 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.world.World;
 import warhammermod.Client.Render.Item.RenderRatlingGun;
 import warhammermod.Entities.Projectile.WarpBulletEntity;
-import warhammermod.Items.Ammocomponent;
 import warhammermod.Items.AutogunBase;
 import warhammermod.Items.firecomponent;
 import warhammermod.utils.ModEnchantmentHelper;

@@ -9,7 +9,6 @@ import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
 import warhammermod.Items.firecomponent;
-import warhammermod.Items.ranged.SlingTemplate;
 import warhammermod.utils.Registry.WHRegistry;
 
 @Environment(EnvType.CLIENT)

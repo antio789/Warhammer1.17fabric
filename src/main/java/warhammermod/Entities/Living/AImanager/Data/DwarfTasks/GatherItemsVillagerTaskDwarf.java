@@ -8,8 +8,8 @@ import com.google.common.collect.ImmutableSet;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.MemoryModuleState;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
-import net.minecraft.entity.ai.brain.task.LookTargetUtil;
 import net.minecraft.entity.ai.brain.task.MultiTickTask;
+import net.minecraft.entity.ai.brain.task.TargetUtil;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -31,7 +31,7 @@ extends MultiTickTask<DwarfEntity> {
     }
 
     protected boolean shouldRun(ServerWorld serverWorld, DwarfEntity dwarfEntity) {
-        return LookTargetUtil.canSee(dwarfEntity.getBrain(), MemoryModuleType.INTERACTION_TARGET, Entityinit.DWARF);
+        return TargetUtil.canSee(dwarfEntity.getBrain(), MemoryModuleType.INTERACTION_TARGET, Entityinit.DWARF);
     }
 
     protected boolean shouldKeepRunning(ServerWorld serverWorld, DwarfEntity dwarfEntity, long l) {
@@ -40,7 +40,7 @@ extends MultiTickTask<DwarfEntity> {
 
     protected void run(ServerWorld serverWorld, DwarfEntity dwarfEntity, long l) {
         DwarfEntity dwarf2 = (DwarfEntity)dwarfEntity.getBrain().getOptionalRegisteredMemory(MemoryModuleType.INTERACTION_TARGET).get();
-        LookTargetUtil.lookAtAndWalkTowardsEachOther(dwarfEntity, dwarf2, 0.5f, 2);
+        TargetUtil.lookAtAndWalkTowardsEachOther(dwarfEntity, dwarf2, 0.5f, 2);
         this.items = GatherItemsVillagerTaskDwarf.getGatherableItems(dwarfEntity, dwarf2);
     }
 
@@ -49,7 +49,7 @@ extends MultiTickTask<DwarfEntity> {
         if (dwarfEntity.squaredDistanceTo(dwarf2) > 5.0) {
             return;
         }
-        LookTargetUtil.lookAtAndWalkTowardsEachOther(dwarfEntity, dwarf2, 0.5f, 2);
+        TargetUtil.lookAtAndWalkTowardsEachOther(dwarfEntity, dwarf2, 0.5f, 2);
         dwarfEntity.talkWithVillager(serverWorld, dwarf2, l);
         if (dwarfEntity.wantsToStartBreeding() && (dwarfEntity.getProfession() == DwarfProfessionRecord.FARMER || dwarf2.canBreed())) {
             GatherItemsVillagerTaskDwarf.giveHalfOfStack(dwarfEntity, DwarfEntity.ITEM_FOOD_VALUES.keySet(), dwarf2);
@@ -91,7 +91,7 @@ extends MultiTickTask<DwarfEntity> {
             break;
         }
         if (!itemStack.isEmpty()) {
-            LookTargetUtil.give(dwarf, itemStack, target.getPos());
+            TargetUtil.give(dwarf, itemStack, target.getPos());
         }
     }
 

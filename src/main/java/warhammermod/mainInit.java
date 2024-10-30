@@ -7,9 +7,9 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.loot.LootTable;
-import net.minecraft.loot.context.LootContextParameterSet;
 import net.minecraft.loot.context.LootContextParameters;
 import net.minecraft.loot.context.LootContextTypes;
+import net.minecraft.loot.context.LootWorldContext;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import warhammermod.Enchantements.ModEnchantements;
@@ -100,7 +100,7 @@ public class mainInit implements ModInitializer {
             ServerWorld world = context.player().getServerWorld();
             PlayerEntity player = context.player();
             LootTable lootTable = world.getServer().getReloadableRegistries().getLootTable(WHRegistry.GIVE_TUTORIAL_BOOK);
-            LootContextParameterSet lootContextParameterSet = new LootContextParameterSet.Builder(world).add(LootContextParameters.ORIGIN, player.getPos()).add(LootContextParameters.THIS_ENTITY, player).build(LootContextTypes.GIFT);
+            LootWorldContext lootContextParameterSet = new LootWorldContext.Builder(world).add(LootContextParameters.ORIGIN, player.getPos()).add(LootContextParameters.THIS_ENTITY, player).build(LootContextTypes.GIFT);
             ObjectArrayList<ItemStack> list2 = lootTable.generateLoot(lootContextParameterSet);
             for (ItemStack itemStack : list2) {
                 player.giveItemStack(itemStack);

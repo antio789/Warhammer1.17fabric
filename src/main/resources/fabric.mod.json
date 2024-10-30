@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "warhammermod",
-  "version": "1",
+  "version": "1.0",
 
   "name": "Warhammer Universe Mod",
   "description": "This mods aims at recreating the warhammer fantasy universe in minecraft\nwhile respecting the original simplicity of the game",
@@ -33,9 +33,9 @@
   ],
 
   "depends": {
-    "fabricloader": ">=0.16.5",
+    "fabricloader": ">=0.16.7",
     "fabric": "*",
-    "minecraft": "1.21.1",
+    "minecraft": "1.21.3",
     "java": ">=21"
   },
   "suggests": {

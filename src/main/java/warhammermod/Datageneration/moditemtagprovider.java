@@ -8,7 +8,6 @@ import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.util.Identifier;
-import warhammermod.Items.melee.specials.Great_pick;
 import warhammermod.utils.Registry.ItemsInit;
 import warhammermod.utils.reference;
 

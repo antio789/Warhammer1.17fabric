@@ -9,17 +9,17 @@ import com.google.common.collect.Maps;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.MemoryModuleState;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
-import net.minecraft.entity.ai.brain.task.LookTargetUtil;
 import net.minecraft.entity.ai.brain.task.MultiTickTask;
+import net.minecraft.entity.ai.brain.task.TargetUtil;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.loot.LootTable;
 import net.minecraft.loot.LootTables;
-import net.minecraft.loot.context.LootContextParameterSet;
 import net.minecraft.loot.context.LootContextParameters;
 import net.minecraft.loot.context.LootContextTypes;
+import net.minecraft.loot.context.LootWorldContext;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Util;
@@ -75,7 +75,7 @@ extends MultiTickTask<DwarfEntity> {
         this.startTime = l;
         PlayerEntity playerEntity = this.getNearestPlayerIfHero(dwarf).get();
         dwarf.getBrain().remember(MemoryModuleType.INTERACTION_TARGET, playerEntity);
-        LookTargetUtil.lookAt(dwarf, playerEntity);
+        TargetUtil.lookAt(dwarf, playerEntity);
     }
 
     @Override
@@ -86,14 +86,14 @@ extends MultiTickTask<DwarfEntity> {
     @Override
     protected void keepRunning(ServerWorld serverWorld, DwarfEntity dwarf, long l) {
         PlayerEntity playerEntity = this.getNearestPlayerIfHero(dwarf).get();
-        LookTargetUtil.lookAt(dwarf, playerEntity);
+        TargetUtil.lookAt(dwarf, playerEntity);
         if (this.isCloseEnough(dwarf, playerEntity)) {
             if (l - this.startTime > 20L) {
                 this.giveGifts(dwarf, playerEntity);
                 this.done = true;
             }
         } else {
-            LookTargetUtil.walkTowards((LivingEntity)dwarf, playerEntity, 0.5f, 5);
+            TargetUtil.walkTowards((LivingEntity)dwarf, playerEntity, 0.5f, 5);
         }
     }
 
@@ -108,7 +108,7 @@ extends MultiTickTask<DwarfEntity> {
     private void giveGifts(DwarfEntity dwarf, LivingEntity recipient) {
         List<ItemStack> list = this.getGifts(dwarf);
         for (ItemStack itemStack : list) {
-            LookTargetUtil.give(dwarf, itemStack, recipient.getPos());
+            TargetUtil.give(dwarf, itemStack, recipient.getPos());
         }
     }
 
@@ -119,7 +119,7 @@ extends MultiTickTask<DwarfEntity> {
         DwarfProfessionRecord villagerProfession = dwarf.getProfession();
         if (GIFTS.containsKey(villagerProfession)) {
             LootTable lootTable = dwarf.getWorld().getServer().getReloadableRegistries().getLootTable(GIFTS.get(villagerProfession));
-            LootContextParameterSet lootContextParameterSet = new LootContextParameterSet.Builder((ServerWorld)dwarf.getWorld()).add(LootContextParameters.ORIGIN, dwarf.getPos()).add(LootContextParameters.THIS_ENTITY, dwarf).build(LootContextTypes.GIFT);
+            LootWorldContext lootContextParameterSet = new LootWorldContext.Builder((ServerWorld)dwarf.getWorld()).add(LootContextParameters.ORIGIN, dwarf.getPos()).add(LootContextParameters.THIS_ENTITY, dwarf).build(LootContextTypes.GIFT);
             return lootTable.generateLoot(lootContextParameterSet);
         }
         return ImmutableList.of(new ItemStack(Items.WHEAT_SEEDS));
